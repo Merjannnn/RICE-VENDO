@@ -1,0 +1,1791 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Rice Vending Machine — Operator Control Panel</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --bg: #f6f1e4;
+        --surface: #fffdf8;
+        --ink: #2b2a22;
+        --ink-soft: #6b6650;
+        --green-deep: #2f5d3a;
+        --green-mid: #3f7a4c;
+        --green-soft: #dce8d0;
+        --gold: #c89b3c;
+        --warn: #b87a1e;
+        --alert: #a6402c;
+        --line: #e4dbc4;
+        --shadow:
+          0 2px 0 rgba(43, 42, 34, 0.06), 0 8px 20px rgba(43, 42, 34, 0.06);
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+      }
+      body {
+        background: var(--bg);
+        background-image: radial-gradient(
+          circle at 1px 1px,
+          rgba(47, 93, 58, 0.06) 1px,
+          transparent 0
+        );
+        background-size: 18px 18px;
+        color: var(--ink);
+        font-family: "Inter", sans-serif;
+        min-height: 100vh;
+      }
+      .mono {
+        font-family: "IBM Plex Mono", monospace;
+      }
+      h1,
+      h2,
+      h3,
+      .display {
+        font-family: "Fraunces", serif;
+      }
+      button {
+        font-family: "Inter", sans-serif;
+        cursor: pointer;
+      }
+      input,
+      select {
+        font-family: "Inter", sans-serif;
+      }
+
+      /* ---------- Login ---------- */
+      #login-view {
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 24px;
+      }
+      .login-card {
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 18px;
+        box-shadow: var(--shadow);
+        width: 100%;
+        max-width: 380px;
+        padding: 36px 32px 30px;
+        text-align: center;
+      }
+      .grain-mark {
+        width: 54px;
+        height: 54px;
+        margin: 0 auto 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: var(--green-deep);
+        border-radius: 14px 14px 6px 6px;
+      }
+      .grain-mark svg {
+        width: 28px;
+        height: 28px;
+      }
+      .login-card h1 {
+        font-size: 22px;
+        margin: 4px 0 2px;
+        color: var(--green-deep);
+        font-weight: 600;
+      }
+      .login-sub {
+        color: var(--ink-soft);
+        font-size: 13px;
+        margin: 0 0 26px;
+      }
+      .field {
+        text-align: left;
+        margin-bottom: 14px;
+      }
+      .field label {
+        display: block;
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--ink-soft);
+        margin-bottom: 6px;
+        letter-spacing: 0.02em;
+        text-transform: uppercase;
+      }
+      .field input {
+        width: 100%;
+        padding: 11px 12px;
+        border-radius: 9px;
+        border: 1.5px solid var(--line);
+        background: #fffefb;
+        font-size: 14px;
+        color: var(--ink);
+        outline: none;
+        transition: border-color 0.15s;
+      }
+      .field input:focus {
+        border-color: var(--green-mid);
+      }
+      .btn-primary {
+        width: 100%;
+        padding: 12px;
+        border: none;
+        border-radius: 9px;
+        background: var(--green-deep);
+        color: #f6f1e4;
+        font-weight: 600;
+        font-size: 14.5px;
+        margin-top: 6px;
+        box-shadow: 0 2px 0 rgba(0, 0, 0, 0.12);
+        transition:
+          background 0.15s,
+          transform 0.1s;
+      }
+      .btn-primary:hover {
+        background: var(--green-mid);
+      }
+      .btn-primary:active {
+        transform: translateY(1px);
+      }
+      .btn-primary:disabled {
+        background: #b7b39e;
+        cursor: not-allowed;
+      }
+      .login-error {
+        background: #f6e3dd;
+        color: var(--alert);
+        border: 1px solid #e3b7a8;
+        font-size: 12.5px;
+        padding: 9px 11px;
+        border-radius: 8px;
+        margin-bottom: 14px;
+        text-align: left;
+      }
+      .login-hint {
+        margin-top: 18px;
+        font-size: 11.5px;
+        color: var(--ink-soft);
+      }
+
+      /* ---------- App shell ---------- */
+      #app-view {
+        display: none;
+        min-height: 100vh;
+      }
+      header.topbar {
+        background: var(--green-deep);
+        color: #f6f1e4;
+        padding: 16px 28px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+      }
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+      .brand-mark {
+        width: 38px;
+        height: 38px;
+        background: rgba(255, 255, 255, 0.12);
+        border-radius: 10px 10px 4px 4px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .brand-mark svg {
+        width: 20px;
+        height: 20px;
+      }
+      .brand h1 {
+        font-size: 17px;
+        margin: 0;
+        font-weight: 600;
+        letter-spacing: 0.01em;
+      }
+      .brand span {
+        display: block;
+        font-size: 11px;
+        color: #cfe0ce;
+        font-weight: 400;
+        font-family: "Inter";
+      }
+      .signout-btn {
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.25);
+        color: #f6f1e4;
+        padding: 9px 16px;
+        border-radius: 8px;
+        font-size: 13px;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        transition: background 0.15s;
+      }
+      .signout-btn:hover {
+        background: rgba(255, 255, 255, 0.2);
+      }
+
+      .tabbar {
+        display: flex;
+        gap: 8px;
+        padding: 14px 28px 0;
+        background: var(--bg);
+        border-bottom: 1px solid var(--line);
+        flex-wrap: wrap;
+      }
+      .tab-btn {
+        background: transparent;
+        border: none;
+        padding: 11px 18px;
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--ink-soft);
+        border-radius: 10px 10px 0 0;
+        position: relative;
+        top: 1px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .tab-btn.active {
+        background: var(--surface);
+        color: var(--green-deep);
+        border: 1px solid var(--line);
+        border-bottom: 1px solid var(--surface);
+      }
+      .tab-badge {
+        background: var(--alert);
+        color: #fff;
+        font-size: 10.5px;
+        font-weight: 700;
+        border-radius: 20px;
+        padding: 1px 7px;
+        min-width: 18px;
+        text-align: center;
+      }
+
+      main {
+        padding: 26px 28px 60px;
+        max-width: 1180px;
+        margin: 0 auto;
+      }
+      .section-head {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin-bottom: 18px;
+      }
+      .section-head h2 {
+        font-size: 21px;
+        color: var(--green-deep);
+        margin: 0;
+        font-weight: 600;
+      }
+      .section-head p {
+        margin: 2px 0 0;
+        color: var(--ink-soft);
+        font-size: 13px;
+      }
+
+      .card {
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        box-shadow: var(--shadow);
+      }
+
+      /* ---------- Transactions ---------- */
+      .stat-row {
+        display: flex;
+        gap: 16px;
+        margin-bottom: 20px;
+        flex-wrap: wrap;
+      }
+      .stat-card {
+        flex: 1;
+        min-width: 200px;
+        padding: 18px 20px;
+        border-radius: 14px;
+        background: var(--surface);
+        border: 1px solid var(--line);
+        box-shadow: var(--shadow);
+      }
+      .stat-card .label {
+        font-size: 12px;
+        color: var(--ink-soft);
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+      }
+      .stat-card .value {
+        font-size: 27px;
+        font-weight: 700;
+        color: var(--green-deep);
+        margin-top: 6px;
+      }
+      .stat-card .value small {
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--ink-soft);
+      }
+
+      .toolbar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 14px;
+        gap: 12px;
+        flex-wrap: wrap;
+      }
+      .btn-outline {
+        background: var(--surface);
+        border: 1.5px solid var(--green-deep);
+        color: var(--green-deep);
+        padding: 9px 16px;
+        border-radius: 8px;
+        font-size: 13.5px;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 7px;
+      }
+      .btn-outline:hover {
+        background: var(--green-soft);
+      }
+      .btn-solid {
+        background: var(--green-deep);
+        border: none;
+        color: #f6f1e4;
+        padding: 9px 16px;
+        border-radius: 8px;
+        font-size: 13.5px;
+        font-weight: 600;
+      }
+      .btn-solid:hover {
+        background: var(--green-mid);
+      }
+      .btn-danger {
+        background: #a6402c;
+        border: 1.5px solid #a6402c;
+        color: #fff;
+        padding: 6px 12px;
+        border-radius: 8px;
+        font-size: 12.5px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background 0.15s;
+      }
+      .btn-danger:hover {
+        background: #8e3525;
+      }
+      .btn-solid.small,
+      .btn-outline.small {
+        padding: 6px 12px;
+        font-size: 12.5px;
+      }
+      .transaction-actions {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 6px;
+      }
+      .transaction-actions button {
+        width: auto;
+        white-space: nowrap;
+      }
+      .transaction-bulk-toolbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 10px 14px;
+        background: #fbf8ef;
+        border-bottom: 1px solid var(--line);
+      }
+      .transaction-bulk-toolbar span {
+        color: var(--ink-soft);
+        font-size: 12.5px;
+      }
+      .transaction-select {
+        width: 16px;
+        height: 16px;
+        accent-color: var(--green-deep);
+        cursor: pointer;
+      }
+      .btn-danger:disabled {
+        background: #c9bdb4;
+        border-color: #c9bdb4;
+        cursor: not-allowed;
+      }
+      .timestamp-editor {
+        position: fixed;
+        inset: 0;
+        z-index: 10;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+        background: rgba(43, 42, 34, 0.35);
+      }
+      .timestamp-editor-card {
+        width: min(360px, 100%);
+        padding: 20px;
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        box-shadow: var(--shadow);
+      }
+      .timestamp-editor-card h3 {
+        margin: 0 0 14px;
+        color: var(--green-deep);
+      }
+      .timestamp-editor-card input {
+        width: 100%;
+        padding: 9px 10px;
+        border: 1.5px solid var(--line);
+        border-radius: 8px;
+        font:
+          13.5px "Inter",
+          sans-serif;
+      }
+      .timestamp-editor-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 8px;
+        margin-top: 16px;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 13.5px;
+      }
+      thead th {
+        text-align: left;
+        padding: 11px 14px;
+        color: var(--ink-soft);
+        font-size: 11.5px;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+        border-bottom: 2px solid var(--line);
+        font-weight: 700;
+      }
+      tbody td {
+        padding: 12px 14px;
+        border-bottom: 1px solid var(--line);
+      }
+      tbody tr:last-child td {
+        border-bottom: none;
+      }
+      tbody tr:hover {
+        background: #fbf8ef;
+      }
+      .pill {
+        display: inline-block;
+        padding: 3px 10px;
+        border-radius: 20px;
+        font-size: 11.5px;
+        font-weight: 600;
+      }
+      .pill-cash {
+        background: #e4eedd;
+        color: var(--green-deep);
+      }
+      .pill-gcash {
+        background: #ddeaf2;
+        color: #265a78;
+      }
+      .pill-card {
+        background: #f1e5d0;
+        color: var(--warn);
+      }
+      .empty-state {
+        text-align: center;
+        padding: 50px 20px;
+        color: var(--ink-soft);
+      }
+      .empty-state svg {
+        width: 44px;
+        height: 44px;
+        margin-bottom: 10px;
+        opacity: 0.5;
+      }
+
+      .record-form {
+        display: grid;
+        grid-template-columns: 1.4fr 1fr 1fr 1fr 1.2fr auto;
+        gap: 12px;
+        align-items: end;
+        padding: 18px 20px;
+        margin-bottom: 20px;
+      }
+      .record-form .field {
+        margin-bottom: 0;
+      }
+      .record-form select,
+      .record-form input {
+        width: 100%;
+        padding: 9px 10px;
+        border-radius: 8px;
+        border: 1.5px solid var(--line);
+        font-size: 13.5px;
+        background: #fffefb;
+      }
+      .record-form .payment-select {
+        appearance: none;
+        -webkit-appearance: none;
+        background-image: none;
+      }
+      .record-form label {
+        font-size: 11px;
+        font-weight: 600;
+        color: var(--ink-soft);
+        text-transform: uppercase;
+        letter-spacing: 0.02em;
+        display: block;
+        margin-bottom: 5px;
+      }
+      .record-form .compute-total {
+        font-family: "IBM Plex Mono";
+        font-weight: 600;
+        color: var(--green-deep);
+        font-size: 15px;
+        padding-bottom: 9px;
+      }
+
+      /* ---------- System status (silo gauges) ---------- */
+      .container-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(270px, 1fr));
+        gap: 18px;
+      }
+      .container-card {
+        padding: 20px 20px 18px;
+        display: flex;
+        gap: 16px;
+      }
+      .silo-wrap {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 6px;
+        flex-shrink: 0;
+      }
+      .silo {
+        width: 56px;
+        height: 118px;
+        border-radius: 12px 12px 5px 5px;
+        border: 3px solid var(--green-deep);
+        background: #fbf8ef;
+        position: relative;
+        overflow: hidden;
+      }
+      .silo::after {
+        content: "";
+        position: absolute;
+        top: 6px;
+        left: 6px;
+        right: 6px;
+        height: 3px;
+        background: repeating-linear-gradient(
+          90deg,
+          var(--line) 0 4px,
+          transparent 4px 8px
+        );
+      }
+      .silo-fill {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        transition: height 0.5s ease;
+      }
+      .silo-fill.ok {
+        background: linear-gradient(
+          180deg,
+          var(--green-mid),
+          var(--green-deep)
+        );
+      }
+      .silo-fill.low {
+        background: linear-gradient(180deg, #d9a94a, var(--warn));
+      }
+      .silo-fill.critical {
+        background: linear-gradient(180deg, #c2593f, var(--alert));
+      }
+      .silo-pct {
+        font-family: "IBM Plex Mono";
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--ink-soft);
+      }
+      .container-body {
+        flex: 1;
+        min-width: 0;
+      }
+      .container-body h3 {
+        font-size: 15.5px;
+        margin: 0 0 2px;
+        font-weight: 600;
+      }
+      .container-body .cap-line {
+        font-size: 12px;
+        color: var(--ink-soft);
+        margin-bottom: 12px;
+        font-family: "IBM Plex Mono";
+      }
+      .status-chip {
+        font-size: 10.5px;
+        font-weight: 700;
+        padding: 2px 9px;
+        border-radius: 20px;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+        margin-left: 8px;
+      }
+      .status-chip.ok {
+        background: var(--green-soft);
+        color: var(--green-deep);
+      }
+      .status-chip.low {
+        background: #f2e2c0;
+        color: var(--warn);
+      }
+      .status-chip.critical {
+        background: #f2d6cc;
+        color: var(--alert);
+      }
+      .edit-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+        margin-bottom: 12px;
+      }
+      .edit-grid .field {
+        margin-bottom: 0;
+      }
+      .edit-grid label {
+        font-size: 10.5px;
+      }
+      .edit-grid input {
+        padding: 8px 9px;
+        font-size: 13px;
+        border-radius: 7px;
+      }
+      .container-actions {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+
+      /* ---------- Alerts ---------- */
+      .alert-list {
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+      }
+      .alert-card {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        padding: 16px 20px;
+        border-radius: 14px;
+        border: 1.5px solid;
+        box-shadow: var(--shadow);
+      }
+      .alert-card.low {
+        background: #fbf3e2;
+        border-color: #e7c57c;
+      }
+      .alert-card.critical {
+        background: #fbe7e0;
+        border-color: #e3a48f;
+      }
+      .alert-icon {
+        width: 42px;
+        height: 42px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+      }
+      .alert-card.low .alert-icon {
+        background: #efcb78;
+      }
+      .alert-card.critical .alert-icon {
+        background: #de8266;
+      }
+      .alert-icon svg {
+        width: 22px;
+        height: 22px;
+        color: #fff;
+      }
+      .alert-info {
+        flex: 1;
+        min-width: 0;
+      }
+      .alert-info h3 {
+        font-size: 15px;
+        margin: 0 0 2px;
+      }
+      .alert-info p {
+        margin: 0;
+        font-size: 12.5px;
+        color: var(--ink-soft);
+      }
+      .alert-info .tag {
+        font-weight: 700;
+        text-transform: uppercase;
+        font-size: 10.5px;
+        letter-spacing: 0.03em;
+      }
+      .alert-card.low .tag {
+        color: var(--warn);
+      }
+      .alert-card.critical .tag {
+        color: var(--alert);
+      }
+      .all-clear {
+        text-align: center;
+        padding: 60px 20px;
+      }
+      .all-clear .grain-mark {
+        background: var(--green-soft);
+        margin-bottom: 16px;
+      }
+      .all-clear .grain-mark svg {
+        color: var(--green-deep);
+      }
+      .all-clear h3 {
+        color: var(--green-deep);
+        font-size: 19px;
+        margin: 0 0 6px;
+      }
+      .all-clear p {
+        color: var(--ink-soft);
+        font-size: 13.5px;
+        margin: 0;
+      }
+
+      .toast {
+        position: fixed;
+        bottom: 24px;
+        right: 24px;
+        background: var(--green-deep);
+        color: #f6f1e4;
+        padding: 12px 18px;
+        border-radius: 10px;
+        font-size: 13.5px;
+        font-weight: 600;
+        box-shadow: var(--shadow);
+        opacity: 0;
+        transform: translateY(8px);
+        transition:
+          opacity 0.25s,
+          transform 0.25s;
+        pointer-events: none;
+        z-index: 50;
+      }
+      .toast.show {
+        opacity: 1;
+        transform: translateY(0);
+      }
+
+      #printable {
+        display: none;
+      }
+
+      @media print {
+        body {
+          background: #fff;
+        }
+        body * {
+          visibility: hidden;
+        }
+        #printable,
+        #printable * {
+          visibility: visible;
+        }
+        #printable {
+          display: block;
+          position: absolute;
+          left: 0;
+          top: 0;
+          width: 100%;
+          padding: 20px;
+          color: #111;
+        }
+        #printable table {
+          font-size: 12px;
+        }
+        #printable thead th {
+          color: #111;
+          border-bottom: 2px solid #111;
+        }
+        #printable td {
+          border-bottom: 1px solid #ccc;
+        }
+      }
+
+      @media (max-width: 720px) {
+        .record-form {
+          grid-template-columns: 1fr 1fr;
+        }
+        header.topbar {
+          padding: 14px 16px;
+        }
+        main {
+          padding: 20px 16px 50px;
+        }
+        .tabbar {
+          padding: 12px 16px 0;
+        }
+      }
+      :focus-visible {
+        outline: 2.5px solid var(--gold);
+        outline-offset: 2px;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- ================= LOGIN VIEW ================= -->
+    <div id="login-view">
+      <div class="login-card">
+        <div class="grain-mark">
+          <svg viewBox="0 0 24 24" fill="none">
+            <path
+              d="M12 2c3 3 5 7 5 11a5 5 0 0 1-10 0c0-4 2-8 5-11z"
+              fill="#F6F1E4"
+            />
+          </svg>
+        </div>
+        <h1>Operator Control Panel</h1>
+        <p class="login-sub">Rice Vending Machine — sign in to continue</p>
+        <div id="login-error-slot"></div>
+        <form id="login-form" autocomplete="off">
+          <div class="field">
+            <label for="username">Username</label>
+            <input
+              type="text"
+              id="username"
+              placeholder="Admin"
+              autocomplete="username"
+            />
+          </div>
+          <div class="field">
+            <label for="password">Password</label>
+            <input
+              type="password"
+              id="password"
+              placeholder="••••••••"
+              autocomplete="current-password"
+            />
+          </div>
+          <button type="submit" class="btn-primary" id="login-submit-btn">
+            Sign In
+          </button>
+        </form>
+        <p class="login-hint">Default credentials — Admin / Admin@1234</p>
+      </div>
+    </div>
+
+    <!-- ================= APP VIEW ================= -->
+    <div id="app-view">
+      <header class="topbar">
+        <div class="brand">
+          <div class="brand-mark">
+            <svg viewBox="0 0 24 24" fill="none">
+              <path
+                d="M12 2c3 3 5 7 5 11a5 5 0 0 1-10 0c0-4 2-8 5-11z"
+                fill="#F6F1E4"
+              />
+            </svg>
+          </div>
+          <div>
+            <h1>Rice Vending Machine</h1>
+            <span>Operator Control Panel</span>
+          </div>
+        </div>
+        <button class="signout-btn" onclick="handleSignOut()">
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            width="15"
+            height="15"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+          >
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+            <path d="M16 17l5-5-5-5" />
+            <path d="M21 12H9" />
+          </svg>
+          Sign Out
+        </button>
+      </header>
+
+      <nav class="tabbar" id="tabbar"></nav>
+
+      <main id="main-content"></main>
+    </div>
+
+    <div id="toast" class="toast"></div>
+
+    <!-- Print-only area -->
+    <div id="printable"></div>
+
+    <script src="shared-data.js"></script>
+    <script>
+      /* =========================================================
+   STORAGE KEYS
+========================================================= */
+      const LS_STATE_KEY = "rvm_machine_state_v1";
+      const SS_AUTH_KEY = "rvm_auth_session_v1";
+      const SS_ATTEMPTS_KEY = "rvm_login_attempts_v1";
+
+      const VALID_USERNAME = "Admin";
+      const VALID_PASSWORD = "Admin@1234";
+      const MAX_ATTEMPTS = 5;
+      const LOCK_MS = 30000;
+
+      let currentTab = "transactions";
+
+      /* =========================================================
+   STATE
+========================================================= */
+      function defaultState() {
+        const now = Date.now();
+        return {
+          containers: [
+            {
+              id: "c1",
+              name: "Jasmine",
+              capacity: 100,
+              stock: 82,
+              price: 55,
+              threshold: 20,
+            },
+            {
+              id: "c2",
+              name: "Sinandomeng",
+              capacity: 100,
+              stock: 100,
+              price: 48,
+              threshold: 20,
+            },
+            {
+              id: "c3",
+              name: "Brown Rice",
+              capacity: 80,
+              stock: 80,
+              price: 60,
+              threshold: 25,
+            },
+          ],
+          transactions: [
+            {
+              id: "t1",
+              variety: "Sinandomeng (Jasmine)",
+              kilos: 3,
+              pricePerKilo: 55,
+              paymentMethod: "Cash",
+              total: 165,
+              timestamp: now - 1000 * 60 * 60 * 26,
+            },
+            {
+              id: "t2",
+              variety: "Dinorado Premium",
+              kilos: 5,
+              pricePerKilo: 60,
+              paymentMethod: "Cash",
+              total: 300,
+              timestamp: now - 1000 * 60 * 60 * 20,
+            },
+            {
+              id: "t3",
+              variety: "Pinawa (Brown Rice)",
+              kilos: 2,
+              pricePerKilo: 65,
+              paymentMethod: "Cash",
+              total: 130,
+              timestamp: now - 1000 * 60 * 60 * 5,
+            },
+            {
+              id: "t4",
+              variety: "Malagkit (Glutinous)",
+              kilos: 1.5,
+              pricePerKilo: 70,
+              paymentMethod: "Cash",
+              total: 105,
+              timestamp: now - 1000 * 60 * 60 * 2,
+            },
+          ],
+        };
+      }
+
+      function loadState() {
+        try {
+          const raw = localStorage.getItem(LS_STATE_KEY);
+          if (!raw) {
+            const d = defaultState();
+            saveState(d);
+            return d;
+          }
+          const parsed = JSON.parse(raw);
+          if (!parsed.containers || !parsed.transactions)
+            throw new Error("bad shape");
+
+          const allowed = new Set(["Jasmine", "Sinandomeng", "Brown Rice"]);
+          parsed.containers = parsed.containers.filter((container) =>
+            allowed.has(container.name),
+          );
+          if (parsed.containers.length !== 3) {
+            parsed.containers = defaultState().containers;
+          }
+
+          parsed.transactions = parsed.transactions.map((transaction) => ({
+            ...transaction,
+            paymentMethod: "Cash",
+          }));
+
+          // Sync kiosk transactions if available
+          if (typeof SHARED_DATA !== "undefined") {
+            parsed = SHARED_DATA.syncKioskTransactionsToPanel(parsed);
+          }
+
+          saveState(parsed);
+          return parsed;
+        } catch (e) {
+          const d = defaultState();
+          saveState(d);
+          return d;
+        }
+      }
+      function saveState(state) {
+        localStorage.setItem(LS_STATE_KEY, JSON.stringify(state));
+        if (typeof SHARED_DATA !== "undefined") {
+          SHARED_DATA.syncPanelInventoryToKiosk(state);
+        }
+      }
+
+      let STATE = loadState();
+
+      // Listen for real-time kiosk transactions
+      if (typeof SHARED_DATA !== "undefined") {
+        SHARED_DATA.onKioskTransaction((transaction) => {
+          // Add new transaction to STATE if not already present
+          if (!STATE.transactions.some((t) => t.id === transaction.id)) {
+            STATE.transactions.push(transaction);
+            saveState(STATE);
+            // If on transactions tab, re-render
+            if (currentTab === "transactions") {
+              renderTransactions();
+            }
+          }
+        });
+      }
+
+      /* =========================================================
+   DATE FORMATTING (deterministic — no locale/timezone drift)
+========================================================= */
+      const MONTHS = [
+        "Jan",
+        "Feb",
+        "Mar",
+        "Apr",
+        "May",
+        "Jun",
+        "Jul",
+        "Aug",
+        "Sep",
+        "Oct",
+        "Nov",
+        "Dec",
+      ];
+      function formatDateTime(ts) {
+        const d = new Date(ts);
+        const mon = MONTHS[d.getMonth()];
+        const day = d.getDate();
+        const year = d.getFullYear();
+        let h = d.getHours();
+        const m = d.getMinutes();
+        const ampm = h >= 12 ? "PM" : "AM";
+        h = h % 12;
+        if (h === 0) h = 12;
+        const mm = m < 10 ? "0" + m : "" + m;
+        return `${mon} ${day}, ${year} · ${h}:${mm} ${ampm}`;
+      }
+      function toDateTimeLocalValue(ts = Date.now()) {
+        const d = new Date(ts);
+        const pad = (value) => String(value).padStart(2, "0");
+        return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+      }
+
+      /* =========================================================
+   AUTH
+========================================================= */
+      function isAuthed() {
+        return sessionStorage.getItem(SS_AUTH_KEY) === "true";
+      }
+      function getAttempts() {
+        try {
+          return (
+            JSON.parse(sessionStorage.getItem(SS_ATTEMPTS_KEY)) || {
+              count: 0,
+              lockUntil: 0,
+            }
+          );
+        } catch (e) {
+          return { count: 0, lockUntil: 0 };
+        }
+      }
+      function setAttempts(a) {
+        sessionStorage.setItem(SS_ATTEMPTS_KEY, JSON.stringify(a));
+      }
+
+      function showLoginError(msg) {
+        const slot = document.getElementById("login-error-slot");
+        slot.innerHTML = `<div class="login-error">${msg}</div>`;
+      }
+      function clearLoginError() {
+        document.getElementById("login-error-slot").innerHTML = "";
+      }
+
+      function handleLoginSubmit(e) {
+        e.preventDefault();
+        clearLoginError();
+        const attempts = getAttempts();
+        const now = Date.now();
+
+        if (attempts.lockUntil && now < attempts.lockUntil) {
+          const secs = Math.ceil((attempts.lockUntil - now) / 1000);
+          showLoginError(`Too many failed attempts. Try again in ${secs}s.`);
+          return;
+        }
+
+        const u = document.getElementById("username").value.trim();
+        const p = document.getElementById("password").value;
+
+        if (u === VALID_USERNAME && p === VALID_PASSWORD) {
+          setAttempts({ count: 0, lockUntil: 0 });
+          sessionStorage.setItem(SS_AUTH_KEY, "true");
+          document.getElementById("login-form").reset();
+          showApp();
+        } else {
+          const count = attempts.count + 1;
+          if (count >= MAX_ATTEMPTS) {
+            setAttempts({ count: 0, lockUntil: now + LOCK_MS });
+            showLoginError(
+              `Too many failed attempts. Locked for ${LOCK_MS / 1000}s.`,
+            );
+          } else {
+            setAttempts({ count, lockUntil: 0 });
+            showLoginError(
+              `Invalid username or password. ${MAX_ATTEMPTS - count} attempt(s) remaining.`,
+            );
+          }
+        }
+      }
+
+      function handleSignOut() {
+        sessionStorage.removeItem(SS_AUTH_KEY);
+        currentTab = "transactions";
+        showLogin();
+      }
+
+      function showLogin() {
+        document.getElementById("login-view").style.display = "flex";
+        document.getElementById("app-view").style.display = "none";
+      }
+      function showApp() {
+        document.getElementById("login-view").style.display = "none";
+        document.getElementById("app-view").style.display = "block";
+        renderTabbar();
+        renderTab();
+      }
+
+      /* =========================================================
+   TOAST
+========================================================= */
+      let toastTimer = null;
+      function showToast(msg) {
+        const t = document.getElementById("toast");
+        t.textContent = msg;
+        t.classList.add("show");
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => t.classList.remove("show"), 2200);
+      }
+
+      /* =========================================================
+   TABS
+========================================================= */
+      function containerStatus(c) {
+        if (c.stock <= c.threshold * 0.5) return "critical";
+        if (c.stock <= c.threshold) return "low";
+        return "ok";
+      }
+      function alertCount() {
+        return STATE.containers.filter((c) => containerStatus(c) !== "ok")
+          .length;
+      }
+
+      function renderTabbar() {
+        const tabs = [
+          { id: "transactions", label: "Transactions" },
+          { id: "status", label: "System Status" },
+          { id: "alerts", label: "Alerts" },
+        ];
+        const ac = alertCount();
+        document.getElementById("tabbar").innerHTML = tabs
+          .map(
+            (t) => `
+    <button class="tab-btn ${currentTab === t.id ? "active" : ""}" onclick="switchTab('${t.id}')">
+      ${t.label}
+      ${t.id === "alerts" && ac > 0 ? `<span class="tab-badge">${ac}</span>` : ""}
+    </button>
+  `,
+          )
+          .join("");
+      }
+      function switchTab(id) {
+        currentTab = id;
+        renderTabbar();
+        renderTab();
+      }
+      function renderTab() {
+        if (currentTab === "transactions") renderTransactions();
+        else if (currentTab === "status") renderStatus();
+        else renderAlerts();
+      }
+
+      /* =========================================================
+   TRANSACTIONS TAB
+========================================================= */
+      function paymentPillClass(pm) {
+        if (pm === "Cash") return "pill-cash";
+        if (pm === "GCash") return "pill-gcash";
+        return "pill-card";
+      }
+
+      function renderTransactions() {
+        const sorted = [...STATE.transactions].sort(
+          (a, b) => b.timestamp - a.timestamp,
+        );
+        const totalEarnings = STATE.transactions.reduce(
+          (s, t) => s + t.total,
+          0,
+        );
+        const totalKilos = STATE.transactions.reduce((s, t) => s + t.kilos, 0);
+
+        const containerOptions = STATE.containers
+          .map(
+            (c) =>
+              `<option value="${c.id}">${c.name} — ₱${c.price}/kg (${c.stock}kg left)</option>`,
+          )
+          .join("");
+
+        const rows = sorted
+          .map(
+            (t) => `
+    <tr>
+      <td><input class="transaction-select transaction-checkbox" type="checkbox" value="${t.id}" onchange="updateSelectedTransactions()" aria-label="Select ${t.variety} transaction"></td>
+      <td>${t.variety}</td>
+      <td class="mono">${t.kilos} kg</td>
+      <td class="mono">₱${t.pricePerKilo.toFixed(2)}</td>
+      <td><span class="pill ${paymentPillClass(t.paymentMethod)}">${t.paymentMethod}</span></td>
+      <td class="mono"><strong>₱${t.total.toFixed(2)}</strong></td>
+      <td class="mono" style="color:var(--ink-soft); font-size:12.5px;">${formatDateTime(t.timestamp)}</td>
+      <td>
+        <div class="transaction-actions">
+          <button class="btn-outline small" onclick="editTransactionTimestamp('${t.id}')">Edit</button>
+        </div>
+      </td>
+    </tr>
+  `,
+          )
+          .join("");
+
+        const tableOrEmpty = sorted.length
+          ? `
+    <div class="card" style="overflow:auto;">
+      <div class="transaction-bulk-toolbar">
+        <span>Select one or more records to delete them together.</span>
+        <button type="button" class="btn-danger" id="delete-selected-btn" onclick="deleteSelectedTransactions()" disabled>Delete selected (0)</button>
+      </div>
+      <table>
+        <thead>
+          <tr><th><input class="transaction-select" type="checkbox" onchange="toggleAllTransactions(this)" aria-label="Select all transactions"></th><th>Variety</th><th>Kilos</th><th>Price / kg</th><th>Payment</th><th>Total</th><th>Timestamp</th><th>Action</th></tr>
+        </thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>
+  `
+          : `
+    <div class="card empty-state">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 3h18v18H3z" opacity="0"/><path d="M4 7h16M4 12h16M4 17h10"/></svg>
+      <p>No purchases recorded yet. Log the first sale using the form above.</p>
+    </div>
+  `;
+
+        document.getElementById("main-content").innerHTML = `
+    <div class="section-head">
+      <div>
+        <h2>Transactions</h2>
+        <p>Every recorded purchase from this machine.</p>
+      </div>
+      <div style="display:flex; gap:10px;">
+        <button class="btn-outline" onclick="printTransactions()">
+          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><path d="M6 14h12v8H6z"/></svg>
+          Print Report
+        </button>
+      </div>
+    </div>
+
+    <div class="stat-row">
+      <div class="stat-card">
+        <div class="label">Total Gross Earnings</div>
+        <div class="value">₱${totalEarnings.toFixed(2)}</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">Total Kilos Sold</div>
+        <div class="value">${totalKilos.toFixed(2)} <small>kg</small></div>
+      </div>
+      <div class="stat-card">
+        <div class="label">Recorded Sales</div>
+        <div class="value">${sorted.length}</div>
+      </div>
+    </div>
+
+    <form class="record-form card" id="record-form" onsubmit="handleRecordSale(event)">
+      <div class="field">
+        <label for="rf-variety">Variety</label>
+        <select id="rf-variety">${containerOptions}</select>
+      </div>
+      <div class="field">
+        <label for="rf-kilos">Kilos</label>
+        <input type="number" id="rf-kilos" min="0.1" step="0.1" value="1" oninput="updateComputedTotal()">
+      </div>
+      <div class="field">
+        <label for="rf-payment">Payment</label>
+        <select id="rf-payment" class="payment-select">
+          <option>Cash</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Total</label>
+        <div class="compute-total" id="rf-total">₱0.00</div>
+      </div>
+      <div class="field">
+        <label for="rf-timestamp">Date &amp; Time</label>
+        <input type="datetime-local" id="rf-timestamp" value="${toDateTimeLocalValue()}">
+      </div>
+      <button type="submit" class="btn-solid">Record Sale</button>
+    </form>
+
+    ${tableOrEmpty}
+  `;
+
+        document
+          .getElementById("rf-variety")
+          .addEventListener("change", updateComputedTotal);
+        updateComputedTotal();
+        buildPrintable(sorted, totalEarnings, totalKilos);
+      }
+
+      function updateComputedTotal() {
+        const variety = document.getElementById("rf-variety");
+        const kilosEl = document.getElementById("rf-kilos");
+        if (!variety || !kilosEl) return;
+        const c = STATE.containers.find((x) => x.id === variety.value);
+        const kilos = parseFloat(kilosEl.value) || 0;
+        const total = c ? c.price * kilos : 0;
+        document.getElementById("rf-total").textContent =
+          `₱${total.toFixed(2)}`;
+      }
+
+      function editTransactionTimestamp(transactionId) {
+        const transaction = STATE.transactions.find(
+          (item) => item.id === transactionId,
+        );
+        if (!transaction) return;
+        const editor = document.createElement("div");
+        editor.className = "timestamp-editor";
+        editor.innerHTML = `
+          <form class="timestamp-editor-card">
+            <h3>Edit transaction date and time</h3>
+            <input type="datetime-local" id="edit-timestamp" value="${toDateTimeLocalValue(transaction.timestamp)}" required>
+            <div class="timestamp-editor-actions">
+              <button type="button" class="btn-outline small" id="cancel-timestamp">Cancel</button>
+              <button type="submit" class="btn-solid small">Save</button>
+            </div>
+          </form>
+        `;
+        document.body.appendChild(editor);
+        const input = editor.querySelector("#edit-timestamp");
+        input.focus();
+        editor.querySelector("#cancel-timestamp").onclick = () =>
+          editor.remove();
+        editor.querySelector("form").onsubmit = (event) => {
+          event.preventDefault();
+          const timestamp = new Date(input.value).getTime();
+          if (Number.isNaN(timestamp)) {
+            showToast("Enter a valid date and time.");
+            return;
+          }
+          transaction.timestamp = timestamp;
+          saveState(STATE);
+          editor.remove();
+          renderTransactions();
+          showToast("Transaction date updated.");
+        };
+      }
+
+      function toggleAllTransactions(source) {
+        document
+          .querySelectorAll(".transaction-checkbox")
+          .forEach((checkbox) => (checkbox.checked = source.checked));
+        updateSelectedTransactions();
+      }
+
+      function updateSelectedTransactions() {
+        const checkboxes = [
+          ...document.querySelectorAll(".transaction-checkbox"),
+        ];
+        const selectedCount = checkboxes.filter(
+          (checkbox) => checkbox.checked,
+        ).length;
+        const deleteButton = document.getElementById("delete-selected-btn");
+        if (deleteButton) {
+          deleteButton.disabled = selectedCount === 0;
+          deleteButton.textContent = `Delete selected (${selectedCount})`;
+        }
+        const selectAll = document.querySelector("thead .transaction-select");
+        if (selectAll) {
+          selectAll.checked =
+            checkboxes.length > 0 && selectedCount === checkboxes.length;
+          selectAll.indeterminate =
+            selectedCount > 0 && selectedCount < checkboxes.length;
+        }
+      }
+
+      function deleteSelectedTransactions() {
+        const selectedIds = [
+          ...document.querySelectorAll(".transaction-checkbox:checked"),
+        ].map((checkbox) => checkbox.value);
+        if (!selectedIds.length) return;
+        if (
+          !confirm(
+            `Delete ${selectedIds.length} selected transaction${selectedIds.length === 1 ? "" : "s"}?`,
+          )
+        )
+          return;
+
+        const selectedTransactions = STATE.transactions.filter((transaction) =>
+          selectedIds.includes(transaction.id),
+        );
+        selectedTransactions.forEach((transaction) => {
+          const container = STATE.containers.find(
+            (item) => item.name === transaction.variety,
+          );
+          if (container) {
+            container.stock = Math.min(
+              container.capacity,
+              +(container.stock + transaction.kilos).toFixed(2),
+            );
+          }
+        });
+        STATE.transactions = STATE.transactions.filter(
+          (transaction) => !selectedIds.includes(transaction.id),
+        );
+        saveState(STATE);
+        renderTransactions();
+        renderTabbar();
+        showToast(
+          `${selectedIds.length} transaction${selectedIds.length === 1 ? "" : "s"} deleted.`,
+        );
+      }
+
+      function deleteTransaction(transactionId) {
+        const transaction = STATE.transactions.find(
+          (item) => item.id === transactionId,
+        );
+        if (!transaction) return;
+        if (
+          !confirm(
+            `Delete the ${transaction.variety} transaction for ₱${transaction.total.toFixed(2)}?`,
+          )
+        )
+          return;
+
+        const container = STATE.containers.find(
+          (item) => item.name === transaction.variety,
+        );
+        if (container) {
+          container.stock = Math.min(
+            container.capacity,
+            +(container.stock + transaction.kilos).toFixed(2),
+          );
+        }
+        STATE.transactions = STATE.transactions.filter(
+          (item) => item.id !== transactionId,
+        );
+        saveState(STATE);
+        renderTransactions();
+        renderTabbar();
+        showToast("Transaction deleted.");
+      }
+
+      function handleRecordSale(e) {
+        e.preventDefault();
+        const containerId = document.getElementById("rf-variety").value;
+        const kilos = parseFloat(document.getElementById("rf-kilos").value);
+        const timestamp = new Date(
+          document.getElementById("rf-timestamp").value,
+        ).getTime();
+        const c = STATE.containers.find((x) => x.id === containerId);
+        if (!c || !kilos || kilos <= 0 || Number.isNaN(timestamp)) {
+          showToast("Enter a valid amount of kilos.");
+          return;
+        }
+        if (kilos > c.stock) {
+          showToast(`Only ${c.stock}kg of ${c.name} available.`);
+          return;
+        }
+
+        const total = +(c.price * kilos).toFixed(2);
+        STATE.transactions.push({
+          id: "t" + Date.now(),
+          variety: c.name,
+          kilos: kilos,
+          pricePerKilo: c.price,
+          paymentMethod: document.getElementById("rf-payment").value,
+          total: total,
+          timestamp: timestamp,
+        });
+        c.stock = +(c.stock - kilos).toFixed(2);
+        saveState(STATE);
+        showToast(`Sale recorded — ${kilos}kg ${c.name}`);
+        renderTransactions();
+        renderTabbar();
+      }
+
+      function buildPrintable(sorted, totalEarnings, totalKilos) {
+        const rows = sorted
+          .map(
+            (t) => `
+    <tr>
+      <td>${t.variety}</td>
+      <td>${t.kilos} kg</td>
+      <td>₱${t.pricePerKilo.toFixed(2)}</td>
+      <td>${t.paymentMethod}</td>
+      <td>₱${t.total.toFixed(2)}</td>
+      <td>${formatDateTime(t.timestamp)}</td>
+    </tr>
+  `,
+          )
+          .join("");
+        document.getElementById("printable").innerHTML = `
+    <h2 style="font-family: 'Fraunces', serif; margin-bottom:2px;">Rice Vending Machine — Transaction Report</h2>
+    <p style="margin:0 0 16px; color:#555; font-size:12px;">Generated ${formatDateTime(Date.now())}</p>
+    <table style="width:100%; border-collapse:collapse;">
+      <thead>
+        <tr><th style="text-align:left;padding:6px;">Variety</th><th style="text-align:left;padding:6px;">Kilos</th><th style="text-align:left;padding:6px;">Price/kg</th><th style="text-align:left;padding:6px;">Payment</th><th style="text-align:left;padding:6px;">Total</th><th style="text-align:left;padding:6px;">Timestamp</th></tr>
+      </thead>
+      <tbody>${rows}</tbody>
+    </table>
+    <p style="margin-top:18px; font-weight:bold;">Total Gross Earnings: ₱${totalEarnings.toFixed(2)} &nbsp; | &nbsp; Total Kilos Sold: ${totalKilos.toFixed(2)} kg</p>
+  `;
+      }
+      function printTransactions() {
+        window.print();
+      }
+
+      /* =========================================================
+   SYSTEM STATUS TAB
+========================================================= */
+      function renderStatus() {
+        const cards = STATE.containers
+          .map((c) => {
+            const pct = Math.max(
+              0,
+              Math.min(100, Math.round((c.stock / c.capacity) * 100)),
+            );
+            const status = containerStatus(c);
+            const chipLabel =
+              status === "ok"
+                ? "Stocked"
+                : status === "low"
+                  ? "Low"
+                  : "Critical";
+            return `
+    <div class="card container-card">
+      <div class="silo-wrap">
+        <div class="silo"><div class="silo-fill ${status}" style="height:${pct}%;"></div></div>
+        <div class="silo-pct">${pct}%</div>
+      </div>
+      <div class="container-body">
+        <h3>${c.name}<span class="status-chip ${status}">${chipLabel}</span></h3>
+        <div class="cap-line">${c.stock}kg / ${c.capacity}kg capacity · ₱${c.price}/kg</div>
+
+        <div class="edit-grid">
+          <div class="field">
+            <label>Stock (kg)</label>
+            <input type="number" min="0" max="${c.capacity}" step="0.1" id="stock-${c.id}" value="${c.stock}">
+          </div>
+          <div class="field">
+            <label>Price / kg (₱)</label>
+            <input type="number" min="0" step="0.5" id="price-${c.id}" value="${c.price}">
+          </div>
+          <div class="field">
+            <label>Low-stock threshold (kg)</label>
+            <input type="number" min="0" max="${c.capacity}" step="1" id="threshold-${c.id}" value="${c.threshold}">
+          </div>
+          <div class="field">
+            <label>Capacity (kg)</label>
+            <input type="number" value="${c.capacity}" disabled style="opacity:.6;">
+          </div>
+        </div>
+
+        <div class="container-actions">
+          <button class="btn-solid small" onclick="saveContainerEdits('${c.id}')">Save Changes</button>
+          <button class="btn-outline small" onclick="refillContainer('${c.id}')">Refill to Full</button>
+        </div>
+      </div>
+    </div>`;
+          })
+          .join("");
+
+        document.getElementById("main-content").innerHTML = `
+    <div class="section-head">
+      <div>
+        <h2>System Status</h2>
+        <p>Live stock levels, pricing, and alert thresholds per rice container.</p>
+      </div>
+    </div>
+    <div class="container-grid">${cards}</div>
+  `;
+      }
+
+      function saveContainerEdits(id) {
+        const c = STATE.containers.find((x) => x.id === id);
+        if (!c) return;
+        const stock = parseFloat(document.getElementById(`stock-${id}`).value);
+        const price = parseFloat(document.getElementById(`price-${id}`).value);
+        const threshold = parseFloat(
+          document.getElementById(`threshold-${id}`).value,
+        );
+
+        if (isNaN(stock) || stock < 0 || stock > c.capacity) {
+          showToast(`Stock must be between 0 and ${c.capacity}kg.`);
+          return;
+        }
+        if (isNaN(price) || price < 0) {
+          showToast("Enter a valid price.");
+          return;
+        }
+        if (isNaN(threshold) || threshold < 0 || threshold > c.capacity) {
+          showToast("Enter a valid threshold.");
+          return;
+        }
+
+        c.stock = stock;
+        c.price = price;
+        c.threshold = threshold;
+        saveState(STATE);
+        showToast(`${c.name} updated.`);
+        renderStatus();
+        renderTabbar();
+      }
+
+      function refillContainer(id) {
+        const c = STATE.containers.find((x) => x.id === id);
+        if (!c) return;
+        c.stock = c.capacity;
+        saveState(STATE);
+        showToast(`${c.name} refilled to ${c.capacity}kg.`);
+        if (currentTab === "status") renderStatus();
+        else renderAlerts();
+        renderTabbar();
+      }
+
+      /* =========================================================
+   ALERTS TAB
+========================================================= */
+      function renderAlerts() {
+        const flagged = STATE.containers
+          .filter((c) => containerStatus(c) !== "ok")
+          .sort((a, b) => a.stock / a.threshold - b.stock / b.threshold);
+
+        const body = flagged.length
+          ? `
+    <div class="alert-list">
+      ${flagged
+        .map((c) => {
+          const status = containerStatus(c);
+          const iconPath =
+            status === "critical"
+              ? '<path d="M12 9v4M12 17h.01"/><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>'
+              : '<path d="M12 9v4M12 17h.01"/><circle cx="12" cy="12" r="9"/>';
+          return `
+        <div class="alert-card ${status}">
+          <div class="alert-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${iconPath}</svg></div>
+          <div class="alert-info">
+            <h3>${c.name} <span class="tag">${status === "critical" ? "Critical" : "Low Stock"}</span></h3>
+            <p>${c.stock}kg remaining of ${c.capacity}kg capacity — threshold set at ${c.threshold}kg.</p>
+          </div>
+          <button class="btn-solid small" onclick="refillContainer('${c.id}')">Refill Now</button>
+        </div>`;
+        })
+        .join("")}
+    </div>
+  `
+          : `
+    <div class="card all-clear">
+      <div class="grain-mark" style="margin:0 auto 16px;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg>
+      </div>
+      <h3>All containers are well stocked</h3>
+      <p>No containers are currently below their low-stock threshold.</p>
+    </div>
+  `;
+
+        document.getElementById("main-content").innerHTML = `
+    <div class="section-head">
+      <div>
+        <h2>Alerts</h2>
+        <p>Containers at or below their configured low-stock threshold. Critical = at or below half of threshold.</p>
+      </div>
+    </div>
+    ${body}
+  `;
+      }
+
+      /* =========================================================
+   INIT
+========================================================= */
+      document
+        .getElementById("login-form")
+        .addEventListener("submit", handleLoginSubmit);
+
+      if (isAuthed()) {
+        showApp();
+      } else {
+        showLogin();
+      }
+    </script>
+  </body>
+</html>

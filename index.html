@@ -1,0 +1,223 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Bigasan Rice Vending System</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        font-family: "Inter", sans-serif;
+      }
+      body {
+        background: linear-gradient(135deg, #1b2a22 0%, #0f1712 100%);
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+      }
+
+      .container {
+        max-width: 900px;
+        width: 100%;
+      }
+
+      .header {
+        text-align: center;
+        margin-bottom: 50px;
+      }
+
+      .header h1 {
+        font-family: "Fraunces", serif;
+        font-size: 42px;
+        font-weight: 700;
+        color: #f6f1e4;
+        margin: 0 0 8px;
+        letter-spacing: 0.02em;
+      }
+
+      .header p {
+        color: #b8c4b5;
+        font-size: 16px;
+        margin: 0;
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+        gap: 24px;
+        margin-bottom: 40px;
+      }
+
+      .card {
+        background: linear-gradient(180deg, #fbf8ef 0%, #f6f1e4 100%);
+        border-radius: 20px;
+        padding: 40px 30px;
+        text-align: center;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        transition:
+          transform 0.3s ease,
+          box-shadow 0.3s ease;
+        border: 1px solid rgba(230, 220, 200, 0.5);
+      }
+
+      .card:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 30px 80px rgba(0, 0, 0, 0.4);
+      }
+
+      .icon {
+        font-size: 64px;
+        margin-bottom: 16px;
+        display: block;
+      }
+
+      .card h2 {
+        font-family: "Fraunces", serif;
+        font-size: 28px;
+        font-weight: 600;
+        color: #2f5d3a;
+        margin: 0 0 12px;
+      }
+
+      .card p {
+        color: #5b4e3a;
+        font-size: 14px;
+        line-height: 1.6;
+        margin: 0 0 24px;
+      }
+
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        background: #2f5d3a;
+        color: #f6f1e4;
+        border: none;
+        padding: 14px 32px;
+        border-radius: 12px;
+        font-size: 15px;
+        font-weight: 600;
+        cursor: pointer;
+        text-decoration: none;
+        transition: background 0.3s ease;
+        font-family: "Inter", sans-serif;
+      }
+
+      .btn:hover {
+        background: #1f4428;
+      }
+
+      .btn-secondary {
+        background: #e3d8b9;
+        color: #2f5d3a;
+      }
+
+      .btn-secondary:hover {
+        background: #d9cda5;
+      }
+
+      .footer {
+        text-align: center;
+        color: #8a9984;
+        font-size: 13px;
+        margin-top: 40px;
+        padding-top: 20px;
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+      }
+
+      .status {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 12px;
+        padding: 16px 20px;
+        margin-top: 16px;
+        font-size: 12px;
+        color: #a8b9a5;
+      }
+
+      .status strong {
+        color: #cfe0ce;
+      }
+
+      @media (max-width: 600px) {
+        .header h1 {
+          font-size: 32px;
+        }
+
+        .grid {
+          grid-template-columns: 1fr;
+        }
+
+        .card {
+          padding: 30px 20px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <h1>🌾 Bigasan</h1>
+        <p>Automated Rice Vending System</p>
+      </div>
+
+      <div class="grid">
+        <!-- Customer Kiosk -->
+        <div class="card">
+          <span class="icon">💳</span>
+          <h2>Customer Kiosk</h2>
+          <p>
+            Purchase fresh rice varieties. Select your preferred rice type,
+            insert payment, and dispense the exact amount you need.
+          </p>
+          <a href="bigasan.html" class="btn">
+            Open Kiosk
+            <span>→</span>
+          </a>
+          <div class="status"><strong>Status:</strong> Ready for customers</div>
+        </div>
+
+        <!-- Operator Control Panel -->
+        <div class="card">
+          <span class="icon">⚙️</span>
+          <h2>Operator Panel</h2>
+          <p>
+            Manage the vending machine. Monitor inventory levels, view sales
+            transactions, check system status, and manage alerts.
+          </p>
+          <a href="rice-vending-control-panel.html" class="btn btn-secondary">
+            Open Panel
+            <span>→</span>
+          </a>
+          <div class="status">
+            <strong>Status:</strong> Login required (Admin / Admin@1234)
+          </div>
+        </div>
+      </div>
+
+      <div class="footer">
+        <p>
+          💡 <strong>Tip:</strong> Run both applications in separate tabs or
+          windows to see real-time transaction sync.
+        </p>
+        <p>
+          Kiosk transactions are automatically saved and appear in the Operator
+          Panel.
+        </p>
+      </div>
+    </div>
+  </body>
+</html>

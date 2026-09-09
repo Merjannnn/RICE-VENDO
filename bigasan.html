@@ -1,0 +1,1247 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>BIGASAN — Rice Vending Kiosk</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --paddy-950: #141f19;
+        --paddy-900: #1b2a22;
+        --paddy-800: #24352b;
+        --paddy-700: #324939;
+        --husk-500: #c89b3c;
+        --husk-400: #ddb65a;
+        --grain-100: #f6f1e4;
+        --grain-200: #efe7d3;
+        --grain-300: #e3d8b9;
+        --ink-900: #241c12;
+        --ink-600: #5b4e3a;
+        --jasmine: #f1e9d8;
+        --sinandomeng: #d9a94c;
+        --brown-rice: #7a5230;
+        --success-600: #3f6b4c;
+        --success-100: #dce9de;
+        --alert-600: #b5482d;
+        --alert-100: #f3dcd3;
+        --font-display: "Fraunces", serif;
+        --font-body: "IBM Plex Sans", sans-serif;
+        --font-mono: "IBM Plex Mono", monospace;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+      }
+      body {
+        min-height: 100vh;
+        background:
+          radial-gradient(ellipse at 20% -10%, #22331f 0%, transparent 55%),
+          radial-gradient(ellipse at 90% 110%, #1a2a25 0%, transparent 55%),
+          #0f1712;
+        font-family: var(--font-body);
+        color: var(--ink-900);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 28px 14px;
+      }
+
+      .kiosk {
+        width: 100%;
+        max-width: 460px;
+        background: linear-gradient(180deg, var(--paddy-800), var(--paddy-950));
+        border-radius: 34px;
+        padding: 14px;
+        box-shadow:
+          0 40px 80px -30px rgba(0, 0, 0, 0.7),
+          0 0 0 1px rgba(200, 155, 60, 0.08),
+          inset 0 1px 0 rgba(255, 255, 255, 0.04);
+        position: relative;
+      }
+      .kiosk::before {
+        /* faint brushed texture */
+        content: "";
+        position: absolute;
+        inset: 0;
+        border-radius: 34px;
+        background-image: repeating-linear-gradient(
+          115deg,
+          rgba(255, 255, 255, 0.015) 0 2px,
+          transparent 2px 5px
+        );
+        pointer-events: none;
+      }
+
+      .kiosk-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 10px 12px 14px;
+      }
+      .brand {
+        display: flex;
+        align-items: baseline;
+        gap: 8px;
+      }
+      .brand-mark {
+        font-family: var(--font-display);
+        font-weight: 700;
+        font-size: 20px;
+        color: var(--grain-100);
+        letter-spacing: 0.02em;
+      }
+      .brand-tag {
+        font-family: var(--font-mono);
+        font-size: 9px;
+        letter-spacing: 0.14em;
+        color: var(--husk-400);
+        text-transform: uppercase;
+        border: 1px solid rgba(200, 155, 60, 0.35);
+        padding: 2px 6px;
+        border-radius: 999px;
+      }
+      .header-controls {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .led {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--success-600);
+        box-shadow: 0 0 8px 2px rgba(76, 158, 89, 0.7);
+        animation: pulse 2.4s ease-in-out infinite;
+      }
+      @keyframes pulse {
+        0%,
+        100% {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0.35;
+        }
+      }
+      .mute-btn,
+      .refresh-btn {
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(255, 255, 255, 0.06);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        color: var(--grain-200);
+        cursor: pointer;
+        font-size: 13px;
+      }
+      .mute-btn:hover,
+      .refresh-btn:hover {
+        background: rgba(255, 255, 255, 0.12);
+      }
+
+      /* stage rail */
+      .stage-rail {
+        display: flex;
+        justify-content: space-between;
+        padding: 0 16px 14px;
+        gap: 4px;
+      }
+      .stage {
+        flex: 1;
+        text-align: center;
+        font-family: var(--font-mono);
+        font-size: 8.5px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: rgba(246, 241, 228, 0.32);
+        position: relative;
+      }
+      .stage .dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: rgba(246, 241, 228, 0.2);
+        margin: 0 auto 6px;
+        transition: all 0.3s ease;
+      }
+      .stage.active {
+        color: var(--husk-400);
+      }
+      .stage.active .dot {
+        background: var(--husk-500);
+        box-shadow: 0 0 6px 1px rgba(200, 155, 60, 0.6);
+      }
+      .stage.done {
+        color: rgba(220, 233, 222, 0.55);
+      }
+      .stage.done .dot {
+        background: var(--success-600);
+      }
+      .stage:not(:last-child)::after {
+        content: "";
+        position: absolute;
+        top: 3px;
+        left: 56%;
+        width: 88%;
+        height: 1px;
+        background: rgba(246, 241, 228, 0.14);
+      }
+      .stage.done:not(:last-child)::after {
+        background: rgba(76, 158, 89, 0.45);
+      }
+
+      /* screen */
+      .screen {
+        background: linear-gradient(
+          180deg,
+          var(--grain-100),
+          var(--grain-200) 90%
+        );
+        border-radius: 22px;
+        min-height: 480px;
+        padding: 26px 22px 20px;
+        position: relative;
+        overflow: hidden;
+        box-shadow:
+          inset 0 2px 10px rgba(0, 0, 0, 0.12),
+          inset 0 -2px 0 rgba(255, 255, 255, 0.4);
+      }
+      .step {
+        animation: fadeIn 0.35s ease;
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+      }
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(6px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .eyebrow {
+        font-family: var(--font-mono);
+        font-size: 10.5px;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: var(--ink-600);
+        margin: 0 0 6px;
+      }
+      h1.step-title {
+        font-family: var(--font-display);
+        font-size: 26px;
+        font-weight: 600;
+        margin: 0 0 4px;
+        color: var(--ink-900);
+        line-height: 1.15;
+      }
+      p.step-sub {
+        margin: 0 0 18px;
+        font-size: 13.5px;
+        color: var(--ink-600);
+        line-height: 1.5;
+      }
+
+      /* idle screen */
+      .idle-wrap {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        gap: 18px;
+      }
+      .idle-jar {
+        width: 96px;
+        height: 118px;
+        position: relative;
+      }
+      .tap-btn {
+        background: var(--paddy-900);
+        color: var(--grain-100);
+        border: none;
+        font-family: var(--font-body);
+        font-weight: 600;
+        font-size: 14.5px;
+        padding: 15px 30px;
+        border-radius: 14px;
+        cursor: pointer;
+        box-shadow: 0 10px 24px -10px rgba(20, 31, 25, 0.6);
+        transition:
+          transform 0.15s ease,
+          box-shadow 0.15s ease;
+      }
+      .tap-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 14px 28px -10px rgba(20, 31, 25, 0.7);
+      }
+      .tap-btn:active {
+        transform: translateY(0px) scale(0.98);
+      }
+      .idle-note {
+        font-size: 11.5px;
+        color: var(--ink-600);
+        font-family: var(--font-mono);
+        letter-spacing: 0.03em;
+      }
+
+      /* rice cards */
+      .rice-grid {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+      .rice-card {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        background: #fff;
+        border: 1.5px solid var(--grain-300);
+        border-radius: 16px;
+        padding: 12px 14px;
+        cursor: pointer;
+        text-align: left;
+        transition:
+          border-color 0.15s ease,
+          transform 0.15s ease;
+      }
+      .rice-card:hover {
+        border-color: var(--husk-500);
+        transform: translateY(-1px);
+      }
+      .rice-card.unavailable {
+        opacity: 0.55;
+        cursor: not-allowed;
+        background: var(--grain-200);
+      }
+      .rice-card.unavailable:hover {
+        border-color: var(--grain-300);
+        transform: none;
+      }
+      .rice-card.selected {
+        border-color: var(--success-600);
+        background: var(--success-100);
+      }
+      .swatch {
+        width: 46px;
+        height: 46px;
+        border-radius: 12px;
+        flex-shrink: 0;
+        box-shadow:
+          inset 0 0 0 3px rgba(255, 255, 255, 0.5),
+          0 2px 6px rgba(0, 0, 0, 0.15);
+      }
+      .rice-hopper {
+        width: 58px;
+        height: 66px;
+        flex-shrink: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: flex-end;
+        position: relative;
+      }
+      .hopper-art {
+        width: 58px;
+        height: 66px;
+        overflow: visible;
+      }
+      .hopper-glass {
+        fill: rgba(255, 255, 255, 0.55);
+        stroke: #b8c4b5;
+        stroke-width: 1.2;
+      }
+      .hopper-rim {
+        fill: #aab9aa;
+      }
+      .hopper-shadow {
+        fill: rgba(36, 53, 43, 0.14);
+      }
+      .hopper-highlight {
+        fill: rgba(255, 255, 255, 0.42);
+      }
+      .hopper-nozzle {
+        fill: #899c8d;
+      }
+      .rice-name {
+        font-family: var(--font-display);
+        font-weight: 600;
+        font-size: 16.5px;
+      }
+      .rice-price {
+        font-family: var(--font-mono);
+        font-size: 12px;
+        color: var(--ink-600);
+      }
+      .rice-meta {
+        flex: 1;
+      }
+
+      /* payment */
+      .amount-display {
+        text-align: center;
+        padding: 16px 0 12px;
+      }
+      .amount-value {
+        font-family: var(--font-mono);
+        font-size: 42px;
+        font-weight: 600;
+        color: var(--paddy-900);
+        line-height: 1;
+      }
+      .amount-hint {
+        font-size: 11.5px;
+        color: var(--ink-600);
+        margin-top: 6px;
+      }
+      .amount-hint.warn {
+        color: var(--alert-600);
+        font-weight: 600;
+      }
+      .weight-preview {
+        font-family: var(--font-mono);
+        font-size: 12.5px;
+        color: var(--success-600);
+        margin-top: 4px;
+        min-height: 16px;
+      }
+      .pay-buttons {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 8px;
+        margin: 14px 0;
+      }
+      .pay-chip {
+        background: #fff;
+        border: 1.5px solid var(--grain-300);
+        border-radius: 10px;
+        padding: 10px 4px;
+        font-family: var(--font-mono);
+        font-weight: 600;
+        font-size: 13px;
+        cursor: pointer;
+        text-align: center;
+      }
+      .pay-chip:hover {
+        border-color: var(--husk-500);
+      }
+      .pay-chip:active {
+        transform: scale(0.96);
+      }
+      .pay-chip.coin {
+        color: var(--ink-600);
+      }
+      .pay-chip.bill {
+        color: var(--success-600);
+      }
+      .row-label {
+        font-family: var(--font-mono);
+        font-size: 9.5px;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--ink-600);
+        margin: 8px 0 2px;
+      }
+
+      .primary-btn {
+        margin-top: auto;
+        background: var(--paddy-900);
+        color: var(--grain-100);
+        border: none;
+        font-family: var(--font-body);
+        font-weight: 600;
+        font-size: 14.5px;
+        padding: 14px;
+        border-radius: 12px;
+        cursor: pointer;
+        transition:
+          opacity 0.15s ease,
+          transform 0.15s ease;
+      }
+      .primary-btn:disabled {
+        opacity: 0.35;
+        cursor: not-allowed;
+      }
+      .primary-btn:not(:disabled):hover {
+        transform: translateY(-1px);
+      }
+      .ghost-btn {
+        background: transparent;
+        border: 1.5px solid var(--grain-300);
+        color: var(--ink-600);
+        font-family: var(--font-body);
+        font-weight: 600;
+        font-size: 13px;
+        padding: 12px;
+        border-radius: 12px;
+        cursor: pointer;
+        margin-top: 8px;
+      }
+      .ghost-btn:hover {
+        border-color: var(--ink-600);
+      }
+
+      /* container step */
+      .sensor-wrap {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 16px;
+        text-align: center;
+      }
+      .sensor-badge {
+        font-family: var(--font-mono);
+        font-size: 11px;
+        letter-spacing: 0.08em;
+        padding: 6px 12px;
+        border-radius: 999px;
+        background: var(--alert-100);
+        color: var(--alert-600);
+        transition: all 0.25s ease;
+      }
+      .sensor-badge.ok {
+        background: var(--success-100);
+        color: var(--success-600);
+      }
+      .ir-icon {
+        font-size: 52px;
+      }
+
+      /* dispensing */
+      .jar-stage {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 14px;
+      }
+      .jar {
+        width: 120px;
+        height: 150px;
+        border: 3px solid var(--paddy-900);
+        border-top: none;
+        border-radius: 0 0 20px 20px;
+        position: relative;
+        overflow: hidden;
+        background: rgba(255, 255, 255, 0.5);
+      }
+      .jar::before {
+        content: "";
+        position: absolute;
+        top: -3px;
+        left: -14px;
+        right: -14px;
+        height: 10px;
+        border: 3px solid var(--paddy-900);
+        border-bottom: none;
+        border-radius: 8px 8px 0 0;
+        background: var(--grain-100);
+      }
+      .jar-fill {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 0%;
+        transition: height 0.25s linear;
+        background-image:
+          radial-gradient(
+            circle at 20% 30%,
+            rgba(255, 255, 255, 0.55) 0 2px,
+            transparent 2px
+          ),
+          radial-gradient(
+            circle at 60% 60%,
+            rgba(255, 255, 255, 0.4) 0 2px,
+            transparent 2px
+          ),
+          radial-gradient(
+            circle at 80% 20%,
+            rgba(255, 255, 255, 0.5) 0 2px,
+            transparent 2px
+          ),
+          radial-gradient(
+            circle at 40% 80%,
+            rgba(255, 255, 255, 0.4) 0 2px,
+            transparent 2px
+          );
+        background-size: 14px 14px;
+      }
+      .weight-readout {
+        font-family: var(--font-mono);
+        font-size: 30px;
+        font-weight: 600;
+        color: var(--paddy-900);
+      }
+      .weight-target {
+        font-family: var(--font-mono);
+        font-size: 11.5px;
+        color: var(--ink-600);
+      }
+      .motor-status {
+        font-family: var(--font-mono);
+        font-size: 10.5px;
+        letter-spacing: 0.1em;
+        color: var(--husk-500);
+        text-transform: uppercase;
+      }
+
+      /* complete */
+      .receipt {
+        background: #fff;
+        border: 1.5px dashed var(--grain-300);
+        border-radius: 14px;
+        padding: 16px;
+        font-family: var(--font-mono);
+        font-size: 12.5px;
+        color: var(--ink-900);
+      }
+      .receipt-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 5px 0;
+        border-bottom: 1px dashed var(--grain-300);
+      }
+      .receipt-row:last-child {
+        border-bottom: none;
+        font-weight: 600;
+      }
+      .check-mark {
+        font-size: 44px;
+        text-align: center;
+        margin-bottom: 6px;
+      }
+
+      /* voice bar */
+      .voice-bar {
+        margin-top: 12px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        background: rgba(255, 255, 255, 0.04);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 14px;
+        padding: 10px 14px;
+      }
+      .wave {
+        display: flex;
+        align-items: center;
+        gap: 2px;
+        height: 18px;
+      }
+      .wave span {
+        width: 2.5px;
+        background: var(--husk-500);
+        border-radius: 2px;
+        animation: wave 1.1s ease-in-out infinite;
+        opacity: 0.55;
+      }
+      .wave span:nth-child(1) {
+        height: 6px;
+        animation-delay: 0s;
+      }
+      .wave span:nth-child(2) {
+        height: 14px;
+        animation-delay: 0.1s;
+      }
+      .wave span:nth-child(3) {
+        height: 9px;
+        animation-delay: 0.2s;
+      }
+      .wave span:nth-child(4) {
+        height: 16px;
+        animation-delay: 0.3s;
+      }
+      .wave span:nth-child(5) {
+        height: 7px;
+        animation-delay: 0.4s;
+      }
+      .wave.speaking span {
+        opacity: 1;
+      }
+      @keyframes wave {
+        0%,
+        100% {
+          transform: scaleY(0.5);
+        }
+        50% {
+          transform: scaleY(1);
+        }
+      }
+      .voice-text {
+        font-family: var(--font-body);
+        font-size: 11.5px;
+        color: var(--grain-200);
+        flex: 1;
+        line-height: 1.4;
+      }
+      .voice-label {
+        font-family: var(--font-mono);
+        font-size: 8.5px;
+        letter-spacing: 0.12em;
+        color: var(--husk-400);
+        text-transform: uppercase;
+        display: block;
+        margin-bottom: 2px;
+      }
+
+      @media (max-width: 380px) {
+        .amount-value {
+          font-size: 34px;
+        }
+        h1.step-title {
+          font-size: 22px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="kiosk">
+      <div class="kiosk-header">
+        <div class="brand">
+          <span class="brand-mark">Bigasan</span>
+          <span class="brand-tag">Auto Rice</span>
+        </div>
+        <div class="header-controls">
+          <div class="led" id="led"></div>
+          <button
+            class="refresh-btn"
+            id="connectSerialBtn"
+            title="Connect to Arduino cash acceptor"
+          >
+            ⏻
+          </button>
+          <button
+            class="refresh-btn"
+            id="refreshBtn"
+            title="Refresh rice stock"
+          >
+            ↻
+          </button>
+          <button class="mute-btn" id="muteBtn" title="Toggle voice guidance">
+            🔊
+          </button>
+        </div>
+      </div>
+
+      <div class="stage-rail" id="stageRail"></div>
+
+      <div class="screen" id="screen"></div>
+
+      <div class="voice-bar">
+        <div class="wave" id="wave">
+          <span></span><span></span><span></span><span></span><span></span>
+        </div>
+        <div class="voice-text">
+          <span class="voice-label">Voice guidance</span
+          ><span id="voiceText"
+            >Tap the screen to begin your rice purchase.</span
+          >
+        </div>
+      </div>
+    </div>
+
+    <script src="shared-data.js"></script>
+    <script>
+      /* ---------- data ---------- */
+      const RICE =
+        typeof SHARED_DATA !== "undefined"
+          ? SHARED_DATA.getRiceInventory()
+          : {
+              jasmine: {
+                name: "Jasmine",
+                price: 55,
+                stock: 10,
+                stockPercent: 72,
+                color: "var(--jasmine)",
+                dot: "#EDE3CC",
+              },
+              sinandomeng: {
+                name: "Sinandomeng",
+                price: 48,
+                stock: 10,
+                stockPercent: 72,
+                color: "var(--sinandomeng)",
+                dot: "#D9A94C",
+              },
+              brown: {
+                name: "Brown Rice",
+                price: 60,
+                stock: 0,
+                stockPercent: 0,
+                color: "var(--brown-rice)",
+                dot: "#7A5230",
+              },
+            };
+      const STAGES = ["select", "pay", "place jar", "dispense", "done"];
+      const MAX_PAYMENT = 2000;
+
+      let state = {
+        step: "idle",
+        rice: null,
+        amount: 0,
+        containerPlaced: false,
+        weight: 0,
+        targetWeight: 0,
+        autoDetectingPayment: false,
+      };
+      let muted = false;
+      let dispenseTimer = null;
+      let serialPort = null;
+      let serialReader = null;
+      let serialWriter = null;
+
+      async function connectSerial() {
+        if (!("serial" in navigator)) {
+          say(
+            "This browser does not support Web Serial. Please use Chrome or Edge.",
+          );
+          return;
+        }
+
+        try {
+          serialPort = await navigator.serial.requestPort();
+          await serialPort.open({ baudRate: 9600 });
+          serialReader = serialPort.readable.getReader();
+          state.autoDetectingPayment = true;
+          renderScreen();
+          say("Cash acceptor connected.");
+
+          while (true) {
+            const { value, done } = await serialReader.read();
+            if (done) break;
+
+            const text = new TextDecoder().decode(value);
+            const lines = text.split(/\r?\n/);
+
+            for (const line of lines) {
+              if (!line.trim()) continue;
+
+              const coinMatch = line.match(
+                /Coin:\s*(\d+)\s*pulse\(s\)\s*->\s*P(\d+)\s*Total\s*=\s*P(\d+)/i,
+              );
+              const billMatch = line.match(
+                /Bill:\s*(\d+)\s*pulse\(s\)\s*->\s*P(\d+)\s*Total\s*=\s*P(\d+)/i,
+              );
+              const totalMatch = line.match(/Total\s*=\s*P(\d+)/i);
+
+              if (coinMatch || billMatch || totalMatch) {
+                const total = Number(
+                  (coinMatch || billMatch || totalMatch)[3] ||
+                    (coinMatch || billMatch || totalMatch)[2] ||
+                    0,
+                );
+                if (state.step === "pay") {
+                  state.amount = total;
+                  state.autoDetectingPayment = true;
+                  renderScreen();
+                }
+              }
+            }
+          }
+        } catch (err) {
+          console.error("Serial connection failed:", err);
+          say(
+            "Unable to connect to the cash acceptor. Check the Arduino connection and try again.",
+          );
+        }
+      }
+
+      /* ---------- voice guidance (Web Speech API) ---------- */
+      function say(text) {
+        document.getElementById("voiceText").textContent = text;
+        const wave = document.getElementById("wave");
+        if (muted || !("speechSynthesis" in window)) {
+          return;
+        }
+        window.speechSynthesis.cancel();
+        const u = new SpeechSynthesisUtterance(text);
+        u.rate = 0.98;
+        u.pitch = 1.0;
+        u.onstart = () => wave.classList.add("speaking");
+        u.onend = () => wave.classList.remove("speaking");
+        window.speechSynthesis.speak(u);
+      }
+
+      document.getElementById("muteBtn").addEventListener("click", () => {
+        muted = !muted;
+        document.getElementById("muteBtn").textContent = muted ? "🔇" : "🔊";
+        if (muted) window.speechSynthesis.cancel();
+      });
+
+      document.getElementById("refreshBtn").addEventListener("click", () => {
+        if (typeof SHARED_DATA !== "undefined") {
+          syncRiceInventoryFromShared();
+          say("Rice inventory refreshed.");
+          renderScreen();
+        }
+      });
+
+      document
+        .getElementById("connectSerialBtn")
+        .addEventListener("click", () => {
+          connectSerial();
+        });
+
+      /* ---------- stage rail ---------- */
+      function renderStageRail() {
+        const rail = document.getElementById("stageRail");
+        const order = ["select", "pay", "place jar", "dispense", "done"];
+        const currentIndex = order.indexOf(
+          state.step === "idle" ? "select" : state.step,
+        );
+        rail.innerHTML = order
+          .map((label, i) => {
+            let cls = "stage";
+            if (state.step !== "idle") {
+              if (i < currentIndex) cls += " done";
+              else if (i === currentIndex) cls += " active";
+            }
+            return `<div class="${cls}"><div class="dot"></div>${label}</div>`;
+          })
+          .join("");
+      }
+
+      /* ---------- screen renderers ---------- */
+      function renderScreen() {
+        renderStageRail();
+        const screen = document.getElementById("screen");
+        screen.innerHTML = "";
+        const step = document.createElement("div");
+        step.className = "step";
+
+        if (state.step === "idle") step.innerHTML = idleView();
+        else if (state.step === "select") step.innerHTML = selectView();
+        else if (state.step === "pay") step.innerHTML = payView();
+        else if (state.step === "place") step.innerHTML = placeView();
+        else if (state.step === "dispense") step.innerHTML = dispenseView();
+        else if (state.step === "done") step.innerHTML = doneView();
+
+        screen.appendChild(step);
+        bindEvents();
+      }
+
+      function idleView() {
+        return `
+    <div class="idle-wrap">
+      <svg width="80" height="98" viewBox="0 0 80 98" fill="none">
+        <path d="M6 14 L14 2 H66 L74 14 V88 C74 92.4 70.4 96 66 96 H14 C9.6 96 6 92.4 6 88 V14Z" stroke="#24352B" stroke-width="3" fill="#F6F1E4"/>
+        <line x1="6" y1="14" x2="74" y2="14" stroke="#24352B" stroke-width="3"/>
+        <circle cx="28" cy="40" r="2.6" fill="#D9A94C"/>
+        <circle cx="42" cy="52" r="2.6" fill="#D9A94C"/>
+        <circle cx="52" cy="34" r="2.6" fill="#D9A94C"/>
+        <circle cx="34" cy="64" r="2.6" fill="#D9A94C"/>
+        <circle cx="56" cy="60" r="2.6" fill="#D9A94C"/>
+        <circle cx="22" cy="56" r="2.6" fill="#D9A94C"/>
+      </svg>
+      <div>
+        <h1 class="step-title" style="text-align:center">Fresh rice,<br>measured to the gram.</h1>
+        <p class="step-sub" style="text-align:center">Insert ₱20–₱100 in coins or bills. We'll guide you by voice the whole way.</p>
+      </div>
+      <button class="tap-btn" data-action="start">Tap to start</button>
+      <div class="idle-note">JASMINE · SINANDOMENG · BROWN RICE</div>
+    </div>
+  `;
+      }
+
+      function riceIllustration(r) {
+        const grain =
+          r.name === "Jasmine"
+            ? "#F1E9D8"
+            : r.name === "Sinandomeng"
+              ? "#D9A94C"
+              : "#8C603A";
+        const fill =
+          r.name === "Jasmine"
+            ? "#E7E1D1"
+            : r.name === "Sinandomeng"
+              ? "#D4A13D"
+              : "#7A5230";
+        return `<svg class="hopper-art" viewBox="0 0 58 66" role="img" aria-label="${r.name} rice hopper">
+    <path class="hopper-shadow" d="M9 8h40l-7 45H16L9 8Z"/>
+    <path class="hopper-glass" d="M8 7h42l-8 47H16L8 7Z"/>
+    <path d="M13 25h32l-4 27H17l-4-27Z" style="fill:${fill};opacity:.95"/>
+    <path class="hopper-rim" d="M7 6h44l-2 7H9L7 6Z"/>
+    <path class="hopper-highlight" d="M13 14h4l5 37h-3l-6-37Z"/>
+    <g style="fill:${grain}">
+      <ellipse cx="19" cy="31" rx="2.1" ry="3.4" transform="rotate(-24 19 31)"/><ellipse cx="27" cy="29" rx="2.1" ry="3.4" transform="rotate(18 27 29)"/>
+      <ellipse cx="36" cy="33" rx="2.1" ry="3.4" transform="rotate(-18 36 33)"/><ellipse cx="42" cy="29" rx="2.1" ry="3.4" transform="rotate(22 42 29)"/>
+      <ellipse cx="22" cy="40" rx="2.1" ry="3.4" transform="rotate(16 22 40)"/><ellipse cx="31" cy="39" rx="2.1" ry="3.4" transform="rotate(-25 31 39)"/>
+      <ellipse cx="39" cy="43" rx="2.1" ry="3.4" transform="rotate(20 39 43)"/><ellipse cx="27" cy="49" rx="2.1" ry="3.4" transform="rotate(-16 27 49)"/>
+    </g>
+    <path class="hopper-nozzle" d="M24 54h10l-2 7h-6l-2-7Z"/>
+  </svg>`;
+      }
+
+      function selectView() {
+        const cards = Object.entries(RICE)
+          .map(
+            ([key, r]) => `
+    <div class="rice-card ${state.rice === key ? "selected" : ""} ${r.stock <= 0 ? "unavailable" : ""}" data-action="${r.stock > 0 ? "select-rice" : ""}" data-rice="${key}" aria-disabled="${r.stock <= 0}">
+      <div class="rice-hopper" aria-label="${r.stockPercent}% stock remaining">
+        ${riceIllustration(r)}
+      </div>
+      <div class="rice-meta">
+        <div class="rice-name">${r.name}</div>
+        <div class="rice-price">${r.stock > 0 ? `₱${r.price} / kg` : "OUT OF STOCK"}</div>
+        <div class="rice-stock">${r.stock > 0 ? `${r.stock} kg remaining · ${r.stockPercent}%` : "No stock remaining · 0%"}</div>
+      </div>
+      <div style="font-size:18px; color:${state.rice === key ? "#3F6B4C" : "#E3D8B9"}">${r.stock > 0 ? (state.rice === key ? "✓" : "○") : "×"}</div>
+    </div>
+  `,
+          )
+          .join("");
+        return `
+    <div class="eyebrow">Step 1 of 4</div>
+    <h1 class="step-title">Choose your rice</h1>
+    <p class="step-sub">Each variety dispenses from its own sealed container.</p>
+    <div class="rice-grid">${cards}</div>
+    <button class="primary-btn" data-action="to-pay" ${state.rice ? "" : "disabled"}>Continue to payment</button>
+  `;
+      }
+
+      function payView() {
+        const r = RICE[state.rice];
+        const weight = state.amount > 0 ? state.amount / r.price : 0;
+        const overMax = state.amount > MAX_PAYMENT;
+        const detectionText = state.autoDetectingPayment
+          ? "Detecting inserted coins and bills..."
+          : state.amount > 0
+            ? "Payment is being read automatically from the acceptors."
+            : "Awaiting coins or bills to be inserted.";
+
+        return `
+    <div class="eyebrow">Step 2 of 4</div>
+    <h1 class="step-title">Insert payment</h1>
+    <p class="step-sub">${r.name} — ₱${r.price} per kg. Accepted range: ₱20 to ₱100.</p>
+    <div class="amount-display">
+      <div class="amount-value">₱${state.amount}</div>
+      <div class="weight-preview">${state.amount > 0 ? "≈ " + weight.toFixed(2) + " kg will be dispensed" : "&nbsp;"}</div>
+      <div class="amount-hint ${overMax ? "warn" : ""}">${state.amount > 0 ? (overMax ? "Maximum accepted amount is ₱2,000" : detectionText) : detectionText}</div>
+    </div>
+    <div class="row-label" style="margin-top: 10px;">Payment status</div>
+    <div class="pay-buttons" style="grid-template-columns: 1fr; margin-top: 8px;">
+      <div class="pay-chip" style="background: rgba(58, 94, 76, 0.06); border-color: rgba(58, 94, 76, 0.15); color: var(--success-600); cursor: default;">${state.autoDetectingPayment ? "Reading acceptors..." : state.amount > 0 ? "Acceptors ready" : "Waiting for cash"}</div>
+    </div>
+    <button class="primary-btn" data-action="confirm-payment" ${state.amount >= 20 && state.amount <= MAX_PAYMENT ? "" : "disabled"}>Confirm ₱${state.amount}</button>
+    <button class="ghost-btn" data-action="back-select">Back</button>
+  `;
+      }
+
+      function placeView() {
+        return `
+    <div class="eyebrow">Step 3 of 4</div>
+    <h1 class="step-title">Place your container</h1>
+    <p class="step-sub">Position your container under the dispensing chute. The infrared sensor checks it's in place before dispensing.</p>
+    <div class="sensor-wrap">
+      <div class="ir-icon">${state.containerPlaced ? "📦" : "🫙"}</div>
+      <div class="sensor-badge ${state.containerPlaced ? "ok" : ""}">${state.containerPlaced ? "CONTAINER DETECTED" : "WAITING FOR CONTAINER"}</div>
+      <button class="tap-btn" data-action="place-container" ${state.containerPlaced ? "disabled" : ""}>${state.containerPlaced ? "Detected" : "Simulate placing container"}</button>
+    </div>
+  `;
+      }
+
+      function dispenseView() {
+        const r = RICE[state.rice];
+        const pct =
+          state.targetWeight > 0
+            ? Math.min(100, (state.weight / state.targetWeight) * 100)
+            : 0;
+        return `
+    <div class="eyebrow">Step 4 of 4</div>
+    <h1 class="step-title">Dispensing ${r.name}</h1>
+    <p class="step-sub">Please wait — the motor stops automatically once the target weight is reached.</p>
+    <div class="jar-stage">
+      <div class="jar"><div class="jar-fill" style="height:${pct}%; background-color:${r.color}"></div></div>
+      <div class="weight-readout">${state.weight.toFixed(0)} g</div>
+      <div class="weight-target">target ${(state.targetWeight * 1000).toFixed(0)} g</div>
+      <div class="motor-status">${pct < 100 ? "● motor running" : "● motor stopped"}</div>
+    </div>
+  `;
+      }
+
+      function doneView() {
+        const r = RICE[state.rice];
+        const now = new Date();
+        const ts = now.toLocaleString("en-PH", {
+          hour: "2-digit",
+          minute: "2-digit",
+          month: "short",
+          day: "numeric",
+        });
+        return `
+    <div class="check-mark">✅</div>
+    <h1 class="step-title" style="text-align:center">Transaction complete</h1>
+    <p class="step-sub" style="text-align:center">Take your rice and container from the dispensing tray.</p>
+    <div class="receipt">
+      <div class="receipt-row"><span>Rice type</span><span>${r.name}</span></div>
+      <div class="receipt-row"><span>Amount paid</span><span>₱${state.amount}.00</span></div>
+      <div class="receipt-row"><span>Weight dispensed</span><span>${state.weight.toFixed(0)} g</span></div>
+      <div class="receipt-row"><span>Time</span><span>${ts}</span></div>
+      <div class="receipt-row"><span>Total</span><span>Paid in full</span></div>
+    </div>
+    <button class="primary-btn" data-action="reset">Start new transaction</button>
+  `;
+      }
+
+      /* ---------- interactions ---------- */
+      function bindEvents() {
+        document.querySelectorAll("[data-action]").forEach((el) => {
+          el.addEventListener("click", onAction);
+        });
+      }
+
+      function onAction(e) {
+        const action = e.currentTarget.dataset.action;
+
+        if (action === "start") {
+          state.step = "select";
+          say(
+            "Welcome. Please choose your rice type: Jasmine, Sinandomeng, or Brown rice.",
+          );
+        } else if (action === "select-rice") {
+          const selectedRice = e.currentTarget.dataset.rice;
+          if (RICE[selectedRice].stock <= 0) {
+            say(
+              `${RICE[selectedRice].name} is out of stock. Please choose another rice type.`,
+            );
+            return;
+          }
+          state.rice = selectedRice;
+          const r = RICE[state.rice];
+          say(
+            `You selected ${r.name}, priced at ${r.price} pesos per kilogram.`,
+          );
+        } else if (action === "to-pay") {
+          state.step = "pay";
+          state.amount = 0;
+          state.autoDetectingPayment = false;
+          say(
+            "Insert coins or bills. The system will detect the total automatically.",
+          );
+        } else if (action === "confirm-payment") {
+          const r = RICE[state.rice];
+          state.targetWeight = state.amount / r.price;
+          state.step = "place";
+          say(
+            "Payment confirmed. Please place your container under the dispensing chute.",
+          );
+        } else if (action === "back-select") {
+          state.step = "select";
+        } else if (action === "place-container") {
+          state.containerPlaced = true;
+          say("Container detected. Starting dispensing now.");
+          setTimeout(() => {
+            state.step = "dispense";
+            renderScreen();
+            startDispensing();
+          }, 700);
+        } else if (action === "reset") {
+          clearInterval(dispenseTimer);
+          state = {
+            step: "idle",
+            rice: null,
+            amount: 0,
+            containerPlaced: false,
+            weight: 0,
+            targetWeight: 0,
+            autoDetectingPayment: false,
+          };
+          say("Tap the screen to begin your rice purchase.");
+        }
+
+        renderScreen();
+      }
+
+      function startDispensing() {
+        const targetGrams = state.targetWeight * 1000;
+        const durationMs = 3600;
+        const stepMs = 60;
+        const totalSteps = durationMs / stepMs;
+        let i = 0;
+        clearInterval(dispenseTimer);
+        dispenseTimer = setInterval(() => {
+          i++;
+          // ease-out curve so it settles precisely at target
+          const t = Math.min(1, i / totalSteps);
+          const eased = 1 - Math.pow(1 - t, 2);
+          state.weight = targetGrams * eased;
+          renderScreen();
+          if (t >= 1) {
+            clearInterval(dispenseTimer);
+            state.weight = targetGrams;
+            const r = RICE[state.rice];
+            say(
+              `Done! ${targetGrams.toFixed(0)} grams of ${r.name} dispensed. Thank you for your purchase.`,
+            );
+            state.step = "done";
+
+            // Save transaction to shared storage for control panel
+            const transaction = {
+              id:
+                "kiosk_" +
+                Date.now() +
+                "_" +
+                Math.random().toString(36).substr(2, 9),
+              variety: r.name,
+              kilos: parseFloat((state.weight / 1000).toFixed(2)),
+              pricePerKilo: r.price,
+              paymentMethod: "Cash",
+              total: state.amount,
+              timestamp: Date.now(),
+            };
+            if (typeof SHARED_DATA !== "undefined") {
+              SHARED_DATA.saveKioskTransaction(transaction);
+            }
+
+            renderScreen();
+          }
+        }, stepMs);
+      }
+
+      function syncRiceInventoryFromShared() {
+        if (typeof SHARED_DATA === "undefined") return;
+        const inventory = SHARED_DATA.getRiceInventory();
+        Object.keys(RICE).forEach((key) => {
+          if (inventory[key]) {
+            RICE[key] = { ...RICE[key], ...inventory[key] };
+          }
+        });
+      }
+
+      if (typeof SHARED_DATA !== "undefined") {
+        SHARED_DATA.onInventoryUpdate((inventory) => {
+          Object.keys(RICE).forEach((key) => {
+            if (inventory[key]) {
+              RICE[key] = { ...RICE[key], ...inventory[key] };
+            }
+          });
+          renderScreen();
+        });
+        syncRiceInventoryFromShared();
+      }
+
+      /* ---------- init ---------- */
+      renderScreen();
+    </script>
+  </body>
+</html>
