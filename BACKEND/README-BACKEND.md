@@ -74,7 +74,7 @@ This will:
 - ✓ Create all necessary tables
 - ✓ Insert default rice types (Jasmine, Sinandomeng, Brown Rice)
 - ✓ Initialize inventory levels
-- ✓ Create default admin operator (username: `admin`, password: `admin123`)
+- ✓ Create default admin operator (username: `Admin`, password: `Admin@1234`)
 
 ### 4. Start the Server
 
@@ -236,8 +236,8 @@ curl http://localhost:3001/api/transactions/stats/daily
 
 After setup, you can log in with:
 
-- **Username:** `admin`
-- **Password:** `admin123`
+- **Username:** `Admin`
+- **Password:** `Admin@1234`
 
 ⚠️ **Important:** Change this password immediately in production!
 

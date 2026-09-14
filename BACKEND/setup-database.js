@@ -155,19 +155,30 @@ async function setupDatabase() {
     `);
     console.log("✓ Default inventory initialized");
 
-    // Insert default admin operator (password: admin123)
+    // Keep the seeded operator aligned with the control panel login.
     const bcrypt = require("bcryptjs");
-    const hashedPassword = await bcrypt.hash("admin123", 10);
+    const hashedPassword = await bcrypt.hash("Admin@1234", 10);
+
+    await connection.query(
+      "UPDATE operators SET username = ? WHERE BINARY username = ?",
+      ["Admin", "admin"],
+    );
 
     await connection.query(
       `
-      INSERT IGNORE INTO operators (username, password_hash, email, full_name, role, is_active)
-      VALUES (?, ?, ?, ?, ?, TRUE);
+      INSERT INTO operators (username, password_hash, email, full_name, role, is_active)
+      VALUES (?, ?, ?, ?, ?, TRUE)
+      ON DUPLICATE KEY UPDATE
+        password_hash = VALUES(password_hash),
+        email = VALUES(email),
+        full_name = VALUES(full_name),
+        role = VALUES(role),
+        is_active = TRUE;
     `,
-      ["admin", hashedPassword, "admin@bigasan.local", "Admin User", "admin"],
+      ["Admin", hashedPassword, "admin@bigasan.local", "Admin User", "admin"],
     );
     console.log(
-      "✓ Default admin operator created (username: admin, password: admin123)",
+      "✓ Default admin operator configured (username: Admin, password: Admin@1234)",
     );
 
     console.log("\n✓ Database setup completed successfully!");
