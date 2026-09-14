@@ -3,8 +3,9 @@
  * Establishes connection pool for the Rice Vending System
  */
 
+const path = require("path");
 const mysql = require("mysql2/promise");
-require("dotenv").config();
+require("dotenv").config({ path: path.resolve(__dirname, ".env") });
 
 const pool = mysql.createPool({
   host: process.env.DB_HOST || "localhost",
@@ -16,19 +17,25 @@ const pool = mysql.createPool({
   connectionLimit: 10,
   queueLimit: 0,
   enableKeepAlive: true,
-  keepAliveInitialDelayMs: 0,
+  keepAliveInitialDelay: 0,
 });
 
-// Test connection
+pool.dbConnected = false;
+
+// Check the database connection without crashing the app if MySQL is not running.
 pool
   .getConnection()
   .then((connection) => {
+    pool.dbConnected = true;
     console.log("✓ MySQL Database connected successfully");
     connection.release();
   })
   .catch((err) => {
-    console.error("✗ Failed to connect to MySQL:", err.message);
-    process.exit(1);
+    pool.dbConnected = false;
+    console.warn(
+      "⚠ MySQL is not available. The server will continue in degraded mode.",
+    );
+    console.warn(`   ${err.message}`);
   });
 
 module.exports = pool;

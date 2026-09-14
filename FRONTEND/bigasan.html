@@ -1238,6 +1238,16 @@
           renderScreen();
         });
         syncRiceInventoryFromShared();
+        SHARED_DATA.fetchInventory().then((inventory) => {
+          if (inventory) {
+            Object.keys(RICE).forEach((key) => {
+              if (inventory[key]) {
+                RICE[key] = { ...RICE[key], ...inventory[key] };
+              }
+            });
+            renderScreen();
+          }
+        });
       }
 
       /* ---------- init ---------- */

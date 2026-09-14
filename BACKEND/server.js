@@ -4,9 +4,10 @@
  */
 
 const express = require("express");
+const path = require("path");
 const cors = require("cors");
 const bodyParser = require("body-parser");
-require("dotenv").config();
+require("dotenv").config({ path: path.resolve(__dirname, ".env") });
 
 const pool = require("./db-connection");
 
@@ -17,12 +18,31 @@ app.use(cors());
 app.use(bodyParser.json({ limit: "10mb" }));
 app.use(bodyParser.urlencoded({ limit: "10mb", extended: true }));
 
-// Serve static files (HTML, CSS, JS)
-app.use(express.static(__dirname));
+// Serve frontend files from the FRONTEND folder
+const frontendPath = path.join(__dirname, "..", "FRONTEND");
+app.use(express.static(frontendPath));
+
+app.get("/", (req, res) => {
+  res.sendFile(path.join(frontendPath, "index.html"));
+});
 
 // Health check endpoint
-app.get("/api/health", (req, res) => {
-  res.json({ status: "OK", message: "Server is running" });
+app.get("/api/health", async (req, res) => {
+  try {
+    await pool.query("SELECT 1");
+    res.json({
+      status: "OK",
+      message: "Server is running",
+      database: "connected",
+    });
+  } catch (err) {
+    res.json({
+      status: "WARN",
+      message: "Server is running, but database is unavailable",
+      database: "disconnected",
+      error: err.message,
+    });
+  }
 });
 
 // ==================== RICE INVENTORY ENDPOINTS ====================

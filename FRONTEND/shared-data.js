@@ -3,11 +3,91 @@
  * Manages transaction data storage and synchronization between kiosk and control panel
  */
 
+const API_BASE_URL = "http://localhost:3001/api";
+
 const SHARED_DATA = {
   // Storage keys
   KIOSK_TRANSACTIONS_KEY: "bigasan_kiosk_transactions",
   CONTROL_PANEL_STATE_KEY: "bigasan_control_panel_state",
   RICE_INVENTORY_KEY: "bigasan_rice_inventory",
+
+  async apiRequest(path, options = {}) {
+    try {
+      const response = await fetch(`${API_BASE_URL}${path}`, {
+        headers: {
+          "Content-Type": "application/json",
+          ...(options.headers || {}),
+        },
+        ...options,
+      });
+
+      if (!response.ok) {
+        const payload = await response.json().catch(() => ({}));
+        throw new Error(payload.error || `Request failed: ${response.status}`);
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.warn(`API request failed for ${path}:`, error.message);
+      return null;
+    }
+  },
+
+  async fetchInventory() {
+    const rows = await this.apiRequest("/inventory");
+    if (!rows || !Array.isArray(rows)) return this.getRiceInventory();
+
+    const mapped = {};
+    rows.forEach((row) => {
+      const key = String(row.name || "")
+        .toLowerCase()
+        .replace(/\s+/g, "");
+      const normalizedKey = key.includes("jasmine")
+        ? "jasmine"
+        : key.includes("sinando")
+          ? "sinandomeng"
+          : key.includes("brown") || key.includes("pinawa")
+            ? "brown"
+            : null;
+
+      if (!normalizedKey) return;
+      const stock = Number(row.stock ?? 0);
+      const capacity = Number(row.capacity ?? 100);
+      mapped[normalizedKey] = {
+        rice_type_id: Number(row.rice_type_id ?? row.id ?? 1),
+        name: row.name,
+        price: Number(row.current_price ?? row.price ?? 0),
+        stock,
+        stockPercent:
+          capacity > 0
+            ? Math.max(0, Math.min(100, Math.round((stock / capacity) * 100)))
+            : 0,
+        color:
+          normalizedKey === "jasmine"
+            ? "var(--jasmine)"
+            : normalizedKey === "sinandomeng"
+              ? "var(--sinandomeng)"
+              : "var(--brown-rice)",
+        dot:
+          normalizedKey === "jasmine"
+            ? "#EDE3CC"
+            : normalizedKey === "sinandomeng"
+              ? "#D9A94C"
+              : "#7A5230",
+      };
+    });
+
+    const inventory = { ...this.getDefaultRiceInventory(), ...mapped };
+    this.saveRiceInventory(inventory);
+    return inventory;
+  },
+
+  async fetchTransactions() {
+    const payload = await this.apiRequest("/transactions?limit=200&offset=0");
+    if (!payload || !Array.isArray(payload.data))
+      return this.getKioskTransactions();
+    return payload.data;
+  },
 
   getDefaultRiceInventory() {
     return {
@@ -172,22 +252,50 @@ const SHARED_DATA = {
    * Save a kiosk transaction to shared storage
    * @param {Object} transaction - Transaction data from kiosk
    */
-  saveKioskTransaction(transaction) {
+  async saveKioskTransaction(transaction) {
+    const payload = {
+      ...transaction,
+      source: "kiosk",
+      syncedAt: Date.now(),
+    };
+
+    try {
+      const inventory = await this.fetchInventory();
+      const match = Object.values(inventory).find(
+        (item) => item.name === payload.variety,
+      );
+      const apiPayload = {
+        rice_type_id: match ? Number(match.rice_type_id || 1) : 1,
+        quantity_bought: Number(payload.kilos || 0),
+        price_per_unit: Number(payload.pricePerKilo || 0),
+        payment_method: payload.paymentMethod || "cash",
+      };
+
+      const response = await this.apiRequest("/transactions", {
+        method: "POST",
+        body: JSON.stringify(apiPayload),
+      });
+
+      if (response && response.success) {
+        payload.apiId = response.transaction_id;
+      }
+    } catch (error) {
+      console.warn(
+        "Backend transaction save failed, continuing with local storage:",
+        error,
+      );
+    }
+
     try {
       const existing = this.getKioskTransactions();
-      existing.push({
-        ...transaction,
-        source: "kiosk",
-        syncedAt: Date.now(),
-      });
+      existing.push(payload);
       localStorage.setItem(
         this.KIOSK_TRANSACTIONS_KEY,
         JSON.stringify(existing),
       );
 
-      // Notify other tabs/windows
       window.dispatchEvent(
-        new CustomEvent("bigasan_transaction_saved", { detail: transaction }),
+        new CustomEvent("bigasan_transaction_saved", { detail: payload }),
       );
 
       return true;
@@ -222,8 +330,29 @@ const SHARED_DATA = {
    * @param {Function} callback - Called when a new transaction is saved
    */
   onKioskTransaction(callback) {
+    const fire = (detail) => {
+      if (!detail) return;
+      callback(detail);
+    };
+
     window.addEventListener("bigasan_transaction_saved", (e) => {
-      callback(e.detail);
+      fire(e.detail);
+    });
+
+    window.addEventListener("storage", (e) => {
+      if (e.key !== this.KIOSK_TRANSACTIONS_KEY || !e.newValue) return;
+      try {
+        const transactions = JSON.parse(e.newValue);
+        const latest = transactions[transactions.length - 1];
+        if (latest) {
+          fire(latest);
+        }
+      } catch (err) {
+        console.error(
+          "Failed to process kiosk transaction storage update:",
+          err,
+        );
+      }
     });
   },
 

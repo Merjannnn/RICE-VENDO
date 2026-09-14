@@ -1165,6 +1165,60 @@
         document.getElementById("login-error-slot").innerHTML = "";
       }
 
+      async function hydrateFromBackend() {
+        if (typeof SHARED_DATA === "undefined") return;
+
+        const inventory = await SHARED_DATA.fetchInventory();
+        if (!inventory) return;
+
+        const existing = loadState();
+        const next = { ...existing, containers: existing.containers || [] };
+
+        next.containers = next.containers.map((container) => {
+          const match =
+            inventory[container.name.toLowerCase().replace(/\s+/g, "")];
+          if (!match) return container;
+          return {
+            ...container,
+            stock: Number(match.stock ?? container.stock),
+            capacity: Number(match.stock ? container.capacity : 100),
+            price: Number(match.price ?? container.price),
+          };
+        });
+
+        if (next.containers.length === 0) {
+          next.containers = [
+            {
+              id: "c1",
+              name: "Jasmine",
+              capacity: 100,
+              stock: 10,
+              price: 55,
+              threshold: 20,
+            },
+            {
+              id: "c2",
+              name: "Sinandomeng",
+              capacity: 100,
+              stock: 10,
+              price: 48,
+              threshold: 20,
+            },
+            {
+              id: "c3",
+              name: "Brown Rice",
+              capacity: 80,
+              stock: 0,
+              price: 60,
+              threshold: 25,
+            },
+          ];
+        }
+
+        STATE = next;
+        saveState(STATE);
+      }
+
       function handleLoginSubmit(e) {
         e.preventDefault();
         clearLoginError();
@@ -1211,9 +1265,10 @@
         document.getElementById("login-view").style.display = "flex";
         document.getElementById("app-view").style.display = "none";
       }
-      function showApp() {
+      async function showApp() {
         document.getElementById("login-view").style.display = "none";
         document.getElementById("app-view").style.display = "block";
+        await hydrateFromBackend();
         renderTabbar();
         renderTab();
       }
