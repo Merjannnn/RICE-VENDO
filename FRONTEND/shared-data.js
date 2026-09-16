@@ -54,6 +54,7 @@ const SHARED_DATA = {
       const stock = Number(row.stock ?? 0);
       const capacity = Number(row.capacity ?? 100);
       mapped[normalizedKey] = {
+        inventory_id: Number(row.id ?? 0),
         rice_type_id: Number(row.rice_type_id ?? row.id ?? 1),
         name: row.name,
         price: Number(row.current_price ?? row.price ?? 0),
@@ -245,7 +246,43 @@ const SHARED_DATA = {
       };
     }
 
-    return this.saveRiceInventory(mapped);
+    const saved = this.saveRiceInventory(mapped);
+    this.savePanelInventoryToDatabase(panelContainers).catch((error) => {
+      console.warn(
+        "Database inventory save failed; local storage is current:",
+        error,
+      );
+    });
+    return saved;
+  },
+
+  async savePanelInventoryToDatabase(panelContainers) {
+    const inventory = await this.fetchInventory();
+    const updates = panelContainers.map(async (container) => {
+      const match = Object.values(inventory).find(
+        (item) =>
+          String(item.name || "").toLowerCase() ===
+          String(container.name || "").toLowerCase(),
+      );
+      if (!match?.inventory_id) return;
+
+      const response = await this.apiRequest(
+        `/inventory/${match.inventory_id}`,
+        {
+          method: "PUT",
+          body: JSON.stringify({
+            stock: Number(container.stock),
+            capacity: Number(container.capacity),
+            current_price: Number(container.price),
+          }),
+        },
+      );
+      if (!response?.success) {
+        throw new Error(`Could not save ${container.name} inventory`);
+      }
+    });
+
+    await Promise.all(updates);
   },
 
   /**

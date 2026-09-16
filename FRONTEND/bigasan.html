@@ -793,6 +793,7 @@
               },
             };
       const STAGES = ["select", "pay", "place jar", "dispense", "done"];
+      const MIN_QUANTITY_KG = 1;
       const MAX_PAYMENT = 2000;
 
       let state = {
@@ -994,34 +995,39 @@
 
       function selectView() {
         const cards = Object.entries(RICE)
-          .map(
-            ([key, r]) => `
-    <div class="rice-card ${state.rice === key ? "selected" : ""} ${r.stock <= 0 ? "unavailable" : ""}" data-action="${r.stock > 0 ? "select-rice" : ""}" data-rice="${key}" aria-disabled="${r.stock <= 0}">
+          .map(([key, r]) => {
+            const unavailable = r.stock < MIN_QUANTITY_KG;
+            const unavailableLabel =
+              r.stock <= 0 ? "OUT OF STOCK" : "INSUFFICIENT STOCK";
+            return `
+    <div class="rice-card ${state.rice === key ? "selected" : ""} ${unavailable ? "unavailable" : ""}" data-action="${unavailable ? "" : "select-rice"}" data-rice="${key}" aria-disabled="${unavailable}">
       <div class="rice-hopper" aria-label="${r.stockPercent}% stock remaining">
         ${riceIllustration(r)}
       </div>
       <div class="rice-meta">
         <div class="rice-name">${r.name}</div>
-        <div class="rice-price">${r.stock > 0 ? `₱${r.price} / kg` : "OUT OF STOCK"}</div>
-        <div class="rice-stock">${r.stock > 0 ? `${r.stock} kg remaining · ${r.stockPercent}%` : "No stock remaining · 0%"}</div>
+        <div class="rice-price">${unavailable ? unavailableLabel : `₱${r.price} / kg`}</div>
+        <div class="rice-stock">${unavailable ? `${r.stock} kg available · minimum is ${MIN_QUANTITY_KG} kg` : `${r.stock} kg remaining · ${r.stockPercent}%`}</div>
       </div>
-      <div style="font-size:18px; color:${state.rice === key ? "#3F6B4C" : "#E3D8B9"}">${r.stock > 0 ? (state.rice === key ? "✓" : "○") : "×"}</div>
+      <div style="font-size:18px; color:${state.rice === key ? "#3F6B4C" : "#E3D8B9"}">${unavailable ? "×" : state.rice === key ? "✓" : "○"}</div>
     </div>
-  `,
-          )
+  `;
+          })
           .join("");
         return `
     <div class="eyebrow">Step 1 of 4</div>
     <h1 class="step-title">Choose your rice</h1>
     <p class="step-sub">Each variety dispenses from its own sealed container.</p>
     <div class="rice-grid">${cards}</div>
-    <button class="primary-btn" data-action="to-pay" ${state.rice ? "" : "disabled"}>Continue to payment</button>
+    <button class="primary-btn" data-action="to-pay" ${state.rice && RICE[state.rice].stock >= MIN_QUANTITY_KG ? "" : "disabled"}>Continue to payment</button>
   `;
       }
 
       function payView() {
         const r = RICE[state.rice];
         const weight = state.amount > 0 ? state.amount / r.price : 0;
+        const minimumPayment = r.price * MIN_QUANTITY_KG;
+        const amountRemaining = Math.max(0, minimumPayment - state.amount);
         const overMax = state.amount > MAX_PAYMENT;
         const detectionText = state.autoDetectingPayment
           ? "Detecting inserted coins and bills..."
@@ -1032,17 +1038,17 @@
         return `
     <div class="eyebrow">Step 2 of 4</div>
     <h1 class="step-title">Insert payment</h1>
-    <p class="step-sub">${r.name} — ₱${r.price} per kg. Accepted range: ₱20 to ₱100.</p>
+    <p class="step-sub">${r.name} — ₱${r.price} per kg. Minimum purchase: ${MIN_QUANTITY_KG} kg (₱${minimumPayment}).</p>
     <div class="amount-display">
       <div class="amount-value">₱${state.amount}</div>
       <div class="weight-preview">${state.amount > 0 ? "≈ " + weight.toFixed(2) + " kg will be dispensed" : "&nbsp;"}</div>
-      <div class="amount-hint ${overMax ? "warn" : ""}">${state.amount > 0 ? (overMax ? "Maximum accepted amount is ₱2,000" : detectionText) : detectionText}</div>
+      <div class="amount-hint ${overMax || amountRemaining > 0 ? "warn" : ""}">${overMax ? `Maximum accepted amount is ₱${MAX_PAYMENT}` : amountRemaining > 0 ? `Minimum required: ₱${minimumPayment} for ${MIN_QUANTITY_KG} kg (insert ₱${amountRemaining} more)` : detectionText}</div>
     </div>
     <div class="row-label" style="margin-top: 10px;">Payment status</div>
     <div class="pay-buttons" style="grid-template-columns: 1fr; margin-top: 8px;">
       <div class="pay-chip" style="background: rgba(58, 94, 76, 0.06); border-color: rgba(58, 94, 76, 0.15); color: var(--success-600); cursor: default;">${state.autoDetectingPayment ? "Reading acceptors..." : state.amount > 0 ? "Acceptors ready" : "Waiting for cash"}</div>
     </div>
-    <button class="primary-btn" data-action="confirm-payment" ${state.amount >= 20 && state.amount <= MAX_PAYMENT ? "" : "disabled"}>Confirm ₱${state.amount}</button>
+    <button class="primary-btn" data-action="confirm-payment" ${state.amount >= minimumPayment && state.amount <= MAX_PAYMENT ? "" : "disabled"}>Confirm ₱${state.amount}</button>
     <button class="ghost-btn" data-action="back-select">Back</button>
   `;
       }
@@ -1120,9 +1126,9 @@
           );
         } else if (action === "select-rice") {
           const selectedRice = e.currentTarget.dataset.rice;
-          if (RICE[selectedRice].stock <= 0) {
+          if (RICE[selectedRice].stock < MIN_QUANTITY_KG) {
             say(
-              `${RICE[selectedRice].name} is out of stock. Please choose another rice type.`,
+              `${RICE[selectedRice].name} has less than ${MIN_QUANTITY_KG} kg available. Please choose another rice type.`,
             );
             return;
           }
@@ -1132,6 +1138,9 @@
             `You selected ${r.name}, priced at ${r.price} pesos per kilogram.`,
           );
         } else if (action === "to-pay") {
+          if (!state.rice || RICE[state.rice].stock < MIN_QUANTITY_KG) {
+            return;
+          }
           state.step = "pay";
           state.amount = 0;
           state.autoDetectingPayment = false;
@@ -1140,6 +1149,10 @@
           );
         } else if (action === "confirm-payment") {
           const r = RICE[state.rice];
+          const minimumPayment = r.price * MIN_QUANTITY_KG;
+          if (state.amount < minimumPayment || state.amount > MAX_PAYMENT) {
+            return;
+          }
           state.targetWeight = state.amount / r.price;
           state.step = "place";
           say(
